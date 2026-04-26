@@ -1,0 +1,321 @@
+[
+    {
+        "timestamp": "2026-04-28T16:07:31+02:00",
+        "date": "2026-04-28",
+        "hour": 16,
+        "items": [
+            {
+                "id": "disneylandparkbigthundermountain",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Big Thunder Mountain",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkphantommanor",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Phantom Manor",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkthundermesariverboatlanding",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Thunder Mesa Riverboat Landing",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkdisneylandrailroadfrontierlanddepot",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Disneyland Railroad - Frontierland Depot",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkfrontierlandplayground",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Frontierland Playground",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkrustlerroundupshootingallery",
+                "park": "Disneyland Park",
+                "land": "Frontierland",
+                "name": "Rustler Roundup Shootin' Gallery",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkstarwarshyperspacemountain",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Star Wars Hyperspace Mountain",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkstartourstheadventurescontinue",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Star Tours: The Adventures Continue",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkbuzzlightyearlaserblast",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Buzz Lightyear Laser Blast",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparklesmysteresdunautilus",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Les Mysteres du Nautilus",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkorbitron",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Orbitron",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkautopia",
+                "park": "Disneyland Park",
+                "land": "Discoveryland",
+                "name": "Autopia",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkpeterpansflight",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Peter Pan's Flight",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkitsasmallworld",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "it's a small world",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkdumbotheflyingelephant",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Dumbo the Flying Elephant",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkmadhattersteacups",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Mad Hatter's Tea Cups",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparklecarrouseldelancelot",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Le Carrousel de Lancelot",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkcaseyjrlepetittrainducirque",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Casey Jr. - le Petit Train du Cirque",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparklepaysdescontesdefees",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Le Pays des Contes de Fees",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkblancheneigeetlesseptnains",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Blanche-Neige et les Sept Nains",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparklesvoyagesdepinocchio",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Les Voyages de Pinocchio",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkalicescuriouslabyrinth",
+                "park": "Disneyland Park",
+                "land": "Fantasyland",
+                "name": "Alice's Curious Labyrinth",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkpiratesofthecaribbean",
+                "park": "Disneyland Park",
+                "land": "Adventureland",
+                "name": "Pirates of the Caribbean",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkindianajonesandthetempleofperil",
+                "park": "Disneyland Park",
+                "land": "Adventureland",
+                "name": "Indiana Jones and the Temple of Peril",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkadventureisle",
+                "park": "Disneyland Park",
+                "land": "Adventureland",
+                "name": "Adventure Isle",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparklacabanedesrobinson",
+                "park": "Disneyland Park",
+                "land": "Adventureland",
+                "name": "La Cabane des Robinson",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneylandparkpiratesbeach",
+                "park": "Disneyland Park",
+                "land": "Adventureland",
+                "name": "Pirates' Beach",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldthetwilightzonetowerofterror",
+                "park": "Disney Adventure World",
+                "land": "World Premiere Plaza",
+                "name": "The Twilight Zone Tower of Terror",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldavengersassembleflightforce",
+                "park": "Disney Adventure World",
+                "land": "Marvel Avengers Campus",
+                "name": "Avengers Assemble: Flight Force",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldspidermanwebadventure",
+                "park": "Disney Adventure World",
+                "land": "Marvel Avengers Campus",
+                "name": "Spider-Man W.E.B. Adventure",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldratatouillelaventuretotalementtoqueederemy",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Ratatouille : L'Aventure Totalement Toquee de Remy",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldcrushscoaster",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Crush's Coaster",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldcarsroadtrip",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Cars ROAD TRIP",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldrcracer",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "RC Racer",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldtoysoldiersparachutedrop",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Toy Soldiers Parachute Drop",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldslinkydogzigzagspin",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Slinky Dog Zigzag Spin",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldcarsquatrerouesrallye",
+                "park": "Disney Adventure World",
+                "land": "Worlds of Pixar",
+                "name": "Cars Quatre Roues Rallye",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldraiponcetangledspin",
+                "park": "Disney Adventure World",
+                "land": "Adventure Way",
+                "name": "Raiponce Tangled Spin",
+                "status": "offline",
+                "wait_time": null
+            },
+            {
+                "id": "disneyadventureworldfrozeneverafter",
+                "park": "Disney Adventure World",
+                "land": "World of Frozen",
+                "name": "Frozen Ever After",
+                "status": "offline",
+                "wait_time": null
+            }
+        ]
+    }
+]

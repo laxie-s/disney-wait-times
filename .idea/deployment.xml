@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="NAS-DLP" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="NAS-DLP">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/DATA/HDD2/V3-DLP-Fan-Guide-Complete-20260428-161604" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath path="/storage " />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
