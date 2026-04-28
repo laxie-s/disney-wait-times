@@ -25,26 +25,6 @@ function normalizeName($value)
     return $value ?? '';
 }
 
-function tokenizeName($value)
-{
-    $value = html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-    if (function_exists('iconv')) {
-        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        if ($converted !== false) {
-            $value = $converted;
-        }
-    }
-
-    $value = strtolower($value);
-    $parts = preg_split('/[^a-z0-9]+/', $value) ?: [];
-    $stopWords = ['a', 'an', 'and', 'the', 'of', 'de', 'du', 'des', 'la', 'le', 'les', 'et', 'd', 'l'];
-
-    return array_values(array_filter(array_unique($parts), function ($part) use ($stopWords) {
-        return strlen($part) >= 2 && !in_array($part, $stopWords, true);
-    }));
-}
-
 function initials($value)
 {
     preg_match_all('/\b([A-Za-z])/', (string) $value, $matches);
@@ -97,7 +77,6 @@ function buildLiveLookup($rawAttractions)
             'source_name' => $name,
             'wait_time' => is_numeric($waitTime) ? (int) $waitTime : null,
             'status' => is_numeric($waitTime) ? 'open' : 'closed',
-            'tokens' => tokenizeName($name),
         ];
 
         if (!isset($lookup[$key]) || $candidate['status'] === 'open') {
@@ -108,71 +87,19 @@ function buildLiveLookup($rawAttractions)
     return $lookup;
 }
 
-function findLiveLookupMatch($candidateNames, $liveLookup)
-{
-    $candidateKeys = [];
-
-    foreach ($candidateNames as $candidateName) {
-        $key = normalizeName($candidateName);
-        if ($key === '') {
-            continue;
-        }
-
-        $candidateKeys[] = $key;
-        if (isset($liveLookup[$key])) {
-            return $liveLookup[$key];
-        }
-    }
-
-    foreach (array_unique($candidateKeys) as $candidateKey) {
-        foreach ($liveLookup as $liveKey => $liveItem) {
-            if ($liveKey === '') {
-                continue;
-            }
-
-            $minLength = min(strlen($candidateKey), strlen($liveKey));
-            if ($minLength < 8) {
-                continue;
-            }
-
-            if (str_contains($liveKey, $candidateKey) || str_contains($candidateKey, $liveKey)) {
-                return $liveItem;
-            }
-        }
-    }
-
-    foreach ($candidateNames as $candidateName) {
-        $candidateTokens = tokenizeName($candidateName);
-        if (empty($candidateTokens)) {
-            continue;
-        }
-
-        foreach ($liveLookup as $liveItem) {
-            $liveTokens = $liveItem['tokens'] ?? [];
-            if (empty($liveTokens)) {
-                continue;
-            }
-
-            if (count(array_diff($candidateTokens, $liveTokens)) === 0) {
-                return $liveItem;
-            }
-        }
-    }
-
-    return null;
-}
-
 function resolveAttractionState($attraction, $liveLookup, $liveAvailable)
 {
     $candidateNames = array_merge([$attraction['name']], $attraction['aliases'] ?? []);
 
-    $match = findLiveLookupMatch($candidateNames, $liveLookup);
-    if ($match !== null) {
-        return array_merge($attraction, [
-            'status' => $match['status'],
-            'wait_time' => $match['wait_time'],
-            'live_name' => $match['source_name'],
-        ]);
+    foreach ($candidateNames as $candidateName) {
+        $key = normalizeName($candidateName);
+        if ($key !== '' && isset($liveLookup[$key])) {
+            return array_merge($attraction, [
+                'status' => $liveLookup[$key]['status'],
+                'wait_time' => $liveLookup[$key]['wait_time'],
+                'live_name' => $liveLookup[$key]['source_name'],
+            ]);
+        }
     }
 
     return array_merge($attraction, [
@@ -287,24 +214,11 @@ function waitAlertProfileForAttraction($name, $profiles)
 
 function recordWaitHistory($catalogue)
 {
-    $records = readJsonStore('wait-history.json', []);
-
     if (empty($catalogue)) {
-        return $records;
+        return [];
     }
 
-    $hasOpenWaits = false;
-    foreach ($catalogue as $item) {
-        if (($item['status'] ?? '') === 'open' && is_numeric($item['wait_time'] ?? null)) {
-            $hasOpenWaits = true;
-            break;
-        }
-    }
-
-    if (!$hasOpenWaits) {
-        return $records;
-    }
-
+    $records = readJsonStore('wait-history.json', []);
     $lastRecord = !empty($records) ? $records[count($records) - 1] : null;
     $now = time();
 
@@ -535,7 +449,7 @@ $structure_land = [
         ['name' => 'Star Tours: The Adventures Continue', 'aliases' => ['Star Tours: The Adventures Continue*'], 'summary' => 'Simulateur qui peut devenir un excellent plan de repli.', 'tip' => 'Tres bon compromis quand on veut garder l energie du land sans tout ralentir.'],
         ['name' => 'Buzz Lightyear Laser Blast', 'aliases' => [], 'summary' => 'Valeur sure famille et competitivite legere.', 'tip' => 'A glisser facilement entre deux priorites plus tendues.'],
         ['name' => 'Les Mysteres du Nautilus', 'aliases' => ['Les Mysteres du Nautilus'], 'summary' => 'Walkthrough calme, dense visuellement et tres fan-compatible.', 'tip' => 'Excellent candidat pour un format details caches par scene.'],
-        ['name' => 'Orbitron', 'aliases' => ['Orbitron', 'Orbitron Machines Volantes'], 'summary' => 'Attraction courte avec point de vue utile sur la zone.', 'tip' => 'Le bon choix quand on veut du visuel sans trop immobiliser le groupe.'],
+        ['name' => 'Orbitron', 'aliases' => ['Orbitron'], 'summary' => 'Attraction courte avec point de vue utile sur la zone.', 'tip' => 'Le bon choix quand on veut du visuel sans trop immobiliser le groupe.'],
         ['name' => 'Autopia', 'aliases' => ['Autopia, presented by Avis'], 'summary' => 'Classique familial a lire avec un vrai contexte d attente.', 'tip' => 'A recommander surtout quand l intention famille est deja tres claire.'],
     ],
     'Fantasyland' => [
@@ -552,7 +466,7 @@ $structure_land = [
     ],
     'Adventureland' => [
         ['name' => 'Pirates of the Caribbean', 'aliases' => [], 'summary' => 'Immersion massive et excellente carte d arbitrage.', 'tip' => 'Tres souvent un meilleur choix qu on ne l imagine au premier regard.'],
-        ['name' => 'Indiana Jones and the Temple of Peril', 'aliases' => ['Indiana Jones and the Temple of Peril', 'Indiana Jones et le Temple du Peril'], 'summary' => 'Coaster court, net et tres lisible cote sensations.', 'tip' => 'Un bon candidat des qu une fenetre d attente raisonnable se presente.'],
+        ['name' => 'Indiana Jones and the Temple of Peril', 'aliases' => ['Indiana Jones and the Temple of Peril'], 'summary' => 'Coaster court, net et tres lisible cote sensations.', 'tip' => 'Un bon candidat des qu une fenetre d attente raisonnable se presente.'],
         ['name' => 'Adventure Isle', 'aliases' => [], 'summary' => 'Zone libre a forte valeur d exploration.', 'tip' => 'Super terrain pour faire respirer une journee sans la vider.'],
         ['name' => 'La Cabane des Robinson', 'aliases' => [], 'summary' => 'Parcours vertical qui enrichit la visite au-dela des rides.', 'tip' => 'Tres bon angle pour des contenus fan originaux.'],
         ['name' => "Pirates' Beach", 'aliases' => [], 'summary' => 'Pause simple et efficace pour les groupes avec enfants.', 'tip' => 'A garder comme soupape quand la densite monte partout.'],
@@ -570,7 +484,7 @@ $structure_land = [
         ['name' => 'Cars ROAD TRIP', 'aliases' => ['Cars Road Trip'], 'summary' => 'Pause familiale plus souple et utile en reequilibrage.', 'tip' => 'Tres bon mouvement quand il faut faire redescendre l intensite du groupe.'],
         ['name' => 'RC Racer', 'aliases' => [], 'summary' => 'Mini dose sensations a fort impact visuel.', 'tip' => 'A glisser quand le timing Pixar est favorable.'],
         ['name' => 'Toy Soldiers Parachute Drop', 'aliases' => [], 'summary' => 'Repere famille qui peut monter vite dans le desordre.', 'tip' => 'A traiter comme une vraie priorite si le groupe est tres Toy Story.'],
-        ['name' => 'Slinky Dog Zigzag Spin', 'aliases' => ['Slinky Dog Zig Zag Spin'], 'summary' => 'Attraction courte et simple pour les plus jeunes.', 'tip' => 'Bonne relance entre deux files plus engageantes.'],
+        ['name' => 'Slinky Dog Zigzag Spin', 'aliases' => [], 'summary' => 'Attraction courte et simple pour les plus jeunes.', 'tip' => 'Bonne relance entre deux files plus engageantes.'],
         ['name' => 'Cars Quatre Roues Rallye', 'aliases' => ['Cars Quatre Roues Rallye'], 'summary' => 'Classique famille compact et efficace.', 'tip' => 'A garder comme soupape de milieu de parcours.'],
     ],
     'Adventure Way' => [

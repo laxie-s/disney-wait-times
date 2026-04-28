@@ -23,15 +23,6 @@ $display_snacks = array_values(array_filter($seasonal_snacks, function ($snack) 
     return !$park_choisi || $snack['park'] === $park_choisi;
 }));
 
-$service_options = [];
-$land_options = [];
-foreach ($display_spots as $spot) {
-    $service_options[normalizeName($spot['service'])] = $spot['service'];
-    $land_options[normalizeName($spot['land'])] = $spot['land'];
-}
-asort($service_options);
-asort($land_options);
-
 $park_restaurant_counts = [];
 $park_snack_counts = [];
 foreach ($park_profiles as $parkName => $profile) {
@@ -57,7 +48,7 @@ renderHeader('food', $site, $nav_items);
             </p>
         </div>
 
-        <div class="metric-grid food-metric-grid">
+        <div class="metric-grid">
             <article class="metric-card">
                 <span><?php echo e(count($display_spots)); ?></span>
                 <p>spots suivis dans cette vue</p>
@@ -99,9 +90,8 @@ renderHeader('food', $site, $nav_items);
                         <span class="pill soft-blue"><?php echo e($parkName); ?></span>
                         <span class="pill soft-gold"><?php echo e($park_restaurant_counts[$parkName]); ?> restos</span>
                     </div>
-                    <h3><?php echo e($parkName); ?></h3>
-                    <p><?php echo e($profile['headline']); ?></p>
-                    <small class="quiet-note"><?php echo e($profile['focus']); ?></small>
+                    <h3><?php echo e($profile['headline']); ?></h3>
+                    <p><?php echo e($profile['focus']); ?></p>
                     <small class="quiet-note"><?php echo e($park_snack_counts[$parkName]); ?> snacks saisonniers ou a surveiller dans cette base.</small>
                 </article>
             <?php endforeach; ?>
@@ -117,48 +107,19 @@ renderHeader('food', $site, $nav_items);
             <span class="quiet-note"><?php echo e($source_notes['food']); ?></span>
         </div>
 
-        <div class="tool-panel filter-panel" data-food-filters>
-            <div class="filter-panel-grid">
-                <div class="filter-stack">
-                    <span class="meta-label">Regime</span>
-                    <div class="filter-toggle-row">
-                        <button type="button" class="toggle-filter is-active" data-filter-group="diet" data-filter-value="all">Tout</button>
-                        <?php foreach ($food_filters as $key => $label) : ?>
-                            <button type="button" class="toggle-filter" data-filter-group="diet" data-filter-value="<?php echo e($key); ?>"><?php echo e($label); ?></button>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <div class="filter-stack">
-                    <span class="meta-label">Service</span>
-                    <div class="filter-chip-row">
-                        <button type="button" class="chip-link active" data-filter-group="service" data-filter-value="all">Tous</button>
-                        <?php foreach ($service_options as $serviceKey => $serviceLabel) : ?>
-                            <button type="button" class="chip-link" data-filter-group="service" data-filter-value="<?php echo e($serviceKey); ?>"><?php echo e($serviceLabel); ?></button>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <div class="filter-stack">
-                    <span class="meta-label">Land</span>
-                    <div class="filter-chip-row">
-                        <button type="button" class="chip-link active" data-filter-group="land" data-filter-value="all">Tous les lands</button>
-                        <?php foreach ($land_options as $landKey => $landLabel) : ?>
-                            <button type="button" class="chip-link" data-filter-group="land" data-filter-value="<?php echo e($landKey); ?>"><?php echo e($landLabel); ?></button>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+        <div class="tool-shell">
+            <div class="filter-toggle-row" data-food-filters>
+                <button type="button" class="toggle-filter is-active" data-filter="all">Tout</button>
+                <?php foreach ($food_filters as $key => $label) : ?>
+                    <button type="button" class="toggle-filter" data-filter="<?php echo e($key); ?>"><?php echo e($label); ?></button>
+                <?php endforeach; ?>
             </div>
-
-            <div class="filter-note-grid">
-                <p class="quiet-note">Pour le sans gluten, on parle ici de reperes utiles. Les allergenes restent a verifier sur place avec les equipes.</p>
-                <p class="quiet-note">Les categories service + land servent a composer un vrai plan repas terrain plus qu un simple annuaire.</p>
-            </div>
+            <p class="quiet-note">Pour le sans gluten, on parle ici de reperes utiles. Les allergenes restent a verifier sur place avec les equipes.</p>
         </div>
 
         <div class="food-grid">
             <?php foreach ($display_spots as $spot) : ?>
-                <article class="food-card" data-food-card data-vegan="<?php echo $spot['vegan'] ? '1' : '0'; ?>" data-vegetarian="<?php echo $spot['vegetarian'] ? '1' : '0'; ?>" data-gluten_support="<?php echo $spot['gluten_support'] ? '1' : '0'; ?>" data-service="<?php echo e(normalizeName($spot['service'])); ?>" data-land-key="<?php echo e(normalizeName($spot['land'])); ?>">
+                <article class="food-card" data-food-card data-vegan="<?php echo $spot['vegan'] ? '1' : '0'; ?>" data-vegetarian="<?php echo $spot['vegetarian'] ? '1' : '0'; ?>" data-gluten_support="<?php echo $spot['gluten_support'] ? '1' : '0'; ?>">
                     <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($spot['park']); ?></span>
                         <span class="pill soft-gold"><?php echo e($spot['service']); ?></span>
@@ -170,24 +131,18 @@ renderHeader('food', $site, $nav_items);
                         <?php if ($spot['vegetarian']) : ?><span>Vegetarien</span><?php endif; ?>
                         <?php if ($spot['gluten_support']) : ?><span>Sans gluten / allergenes</span><?php endif; ?>
                     </div>
-                    <div class="food-meta food-meta-split">
-                        <div class="food-booking">
-                            <strong><?php echo e($spot['booking']); ?></strong>
-                            <small><?php echo e($spot['support_label']); ?></small>
-                        </div>
-                        <div class="food-location">
-                            <span class="meta-label">Land</span>
-                            <small><?php echo e($spot['land']); ?></small>
-                        </div>
+                    <div class="food-meta">
+                        <strong><?php echo e($spot['booking']); ?></strong>
+                        <small><?php echo e($spot['land']); ?></small>
                     </div>
                     <ul class="food-item-list">
                         <?php foreach ($spot['items'] as $item) : ?>
                             <li>
-                                <div class="food-item-copy">
+                                <div>
                                     <strong><?php echo e($item['name']); ?></strong>
                                     <small><?php echo e($item['type']); ?></small>
                                 </div>
-                                <span class="food-price"><?php echo e($item['price']); ?></span>
+                                <span><?php echo e($item['price']); ?></span>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -212,16 +167,15 @@ renderHeader('food', $site, $nav_items);
                     <div class="snack-image-wrap">
                         <img src="<?php echo e($snack['image']); ?>" alt="Visuel fan du snack <?php echo e($snack['name']); ?>">
                     </div>
-                    <div class="card-row snack-card-top">
+                    <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($snack['park']); ?></span>
                         <span class="pill soft-green"><?php echo e($snack['price']); ?></span>
                     </div>
                     <h3><?php echo e($snack['name']); ?></h3>
                     <p><?php echo e($snack['summary']); ?></p>
-                    <div class="snack-location-block">
+                    <div class="food-meta">
                         <strong><?php echo e($snack['location']); ?></strong>
-                        <span><?php echo e($snack['land']); ?></span>
-                        <small><?php echo e($snack['season']); ?></small>
+                        <small><?php echo e($snack['land']); ?></small>
                     </div>
                     <small class="source-note"><?php echo e($snack['source']); ?></small>
                 </article>
@@ -251,7 +205,6 @@ renderHeader('food', $site, $nav_items);
                 <div class="section-head compact-head">
                     <p class="eyebrow">Simulateur budget repas</p>
                     <h2>Une estimation simple avant de partir.</h2>
-                    <p>Base indicative pour un jour standard avec menus affiches. Le resultat ne remplace pas la carte du jour, les offres ou les extras premium.</p>
                 </div>
                 <div class="budget-grid">
                     <label><span>Adultes</span><input type="number" min="1" max="8" value="<?php echo e($meal_budget_defaults['adults']); ?>" data-budget-field="adults"></label>
@@ -262,13 +215,12 @@ renderHeader('food', $site, $nav_items);
                     <label><span>Snacks / pers.</span><input type="number" min="0" max="6" value="1" data-budget-field="snacks"></label>
                 </div>
                 <div class="budget-result">
-                    <div class="budget-result-head">
+                    <div>
                         <span class="meta-label">Budget estime</span>
                         <strong data-budget-total>--</strong>
                     </div>
                     <p data-budget-breakdown>Ajoute ton rythme de repas pour obtenir une enveloppe simple.</p>
                 </div>
-                <small class="source-note">A ajuster selon le parc, les menus du moment, les boissons, le petit-dejeuner et les achats plaisir.</small>
             </article>
         </div>
     </section>

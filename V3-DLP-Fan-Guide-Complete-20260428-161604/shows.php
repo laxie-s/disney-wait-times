@@ -12,7 +12,7 @@ function clockToMinutes($value)
     return ((int) $hours * 60) + (int) $minutes;
 }
 
-function showSessionCards($shows, $focusMinutes)
+function showSessionCards($shows, $focusMinutes, $windowStart)
 {
     $sessions = [];
 
@@ -33,6 +33,8 @@ function showSessionCards($shows, $focusMinutes)
                 'location' => $show['location'],
                 'booking' => $show['booking'],
                 'distance' => $distance,
+                'column' => max(1, (int) floor(($start - $windowStart) / 15) + 1),
+                'span' => max(2, (int) ceil(($show['duration'] ?? 30) / 15)),
             ];
         }
     }
@@ -57,14 +59,21 @@ if (!preg_match('/^\d{2}:\d{2}$/', $time_focus)) {
     $time_focus = '17:30';
 }
 
+$window_start = 10 * 60 + 30;
+$window_end = 22 * 60 + 30;
 $focus_minutes = clockToMinutes($time_focus) ?? (17 * 60 + 30);
 
 $visible_shows = array_values(array_filter($show_reference, function ($show) use ($park_choisi) {
     return $park_choisi === null || $show['park'] === $park_choisi;
 }));
 
-$show_sessions = showSessionCards($visible_shows, $focus_minutes);
+$show_sessions = showSessionCards($visible_shows, $focus_minutes, $window_start);
 $nearest_sessions = array_slice($show_sessions, 0, 6);
+$time_markers = [];
+for ($minutes = $window_start; $minutes <= $window_end; $minutes += 60) {
+    $time_markers[] = sprintf('%02d:%02d', (int) floor($minutes / 60), $minutes % 60);
+}
+
 $program_dataset = [
     'focus' => $time_focus,
     'sessions' => $show_sessions,
@@ -171,6 +180,15 @@ renderHeader('shows', $site, $nav_items);
 
     <section class="shell section-shell">
         <div class="show-program-board">
+            <div class="show-board-head">
+                <div></div>
+                <div class="show-time-scale">
+                    <?php foreach ($time_markers as $marker) : ?>
+                        <span><?php echo e($marker); ?></span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
             <?php foreach ($visible_shows as $show) : ?>
                 <article class="show-row">
                     <div class="show-row-copy">
@@ -186,7 +204,7 @@ renderHeader('shows', $site, $nav_items);
                         <?php endif; ?>
                     </div>
 
-                    <div class="show-session-grid">
+                    <div class="show-row-timeline">
                         <?php foreach ($show['times'] as $time) : ?>
                             <?php
                             $minutes = clockToMinutes($time);
@@ -194,10 +212,13 @@ renderHeader('shows', $site, $nav_items);
                                 continue;
                             }
                             $distance = abs($minutes - $focus_minutes);
+                            $column = max(1, (int) floor(($minutes - $window_start) / 15) + 1);
+                            $span = max(2, (int) ceil(($show['duration'] ?? 30) / 15));
                             ?>
                             <button
                                 type="button"
                                 class="show-slot<?php echo $distance <= 20 ? ' is-near' : ''; ?>"
+                                style="grid-column: <?php echo e($column); ?> / span <?php echo e($span); ?>;"
                                 data-show-slot
                                 data-show-time="<?php echo e($time); ?>"
                                 data-show-name="<?php echo e($show['name']); ?>"
