@@ -214,6 +214,7 @@ function waitAlertProfileForAttraction($name, $profiles)
 
 function recordWaitHistory($catalogue)
 {
+<<<<<<< HEAD
     $records = readJsonStore('wait-history.json', []);
 
     if (empty($catalogue)) {
@@ -232,6 +233,13 @@ function recordWaitHistory($catalogue)
         return $records;
     }
 
+=======
+    if (empty($catalogue)) {
+        return [];
+    }
+
+    $records = readJsonStore('wait-history.json', []);
+>>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
     $lastRecord = !empty($records) ? $records[count($records) - 1] : null;
     $now = time();
 
@@ -784,8 +792,13 @@ $dining_spots = [
     ['id' => 'web-food-truck', 'park' => 'Disney Adventure World', 'name' => 'WEB Food Truck', 'land' => 'Marvel Avengers Campus', 'service' => 'Food truck', 'booking' => 'Sans reservation', 'vegan' => true, 'vegetarian' => true, 'gluten_support' => false, 'support_label' => 'Tofu fume et allergenes a confirmer sur place', 'why' => 'Parfait quand le groupe veut garder le rythme du Campus sans couper la dynamique pour une vraie pause a table.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026', 'items' => [['name' => 'Nouilles poulet, crevettes ou tofu fume', 'price' => 'Selon carte', 'type' => 'Food truck']]],
     ['id' => 'fan-tastic', 'park' => 'Disney Adventure World', 'name' => 'FAN-tastic Food Truck', 'land' => 'Marvel Avengers Campus', 'service' => 'Food truck', 'booking' => 'Sans reservation', 'vegan' => true, 'vegetarian' => true, 'gluten_support' => false, 'support_label' => 'Hot-dog veggie et produits sucres selon carte', 'why' => 'Le spot le plus pratique pour un snack mobile si tu surveilles une baisse de wait sur Spider-Man ou Flight Force.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026', 'items' => [['name' => 'Hot-dogs gourmands et vegan cookie', 'price' => 'Selon carte', 'type' => 'Food truck']]],
     ['id' => 'chez-remy', 'park' => 'Disney Adventure World', 'name' => 'Bistrot Chez Remy', 'land' => 'Worlds of Pixar', 'service' => 'Service a table', 'booking' => 'Reservation tres conseillee', 'vegan' => false, 'vegetarian' => true, 'gluten_support' => true, 'support_label' => 'Verifier les options du jour et allergenes', 'why' => 'Toujours une des tables les plus demandees du deuxieme parc, avec un vrai capital affectif pour les visiteurs Pixar.', 'source' => 'Menu officiel consulte le 28 avril 2026', 'items' => [['name' => 'Cuisine de bistrot inspiree de Ratatouille', 'price' => 'Selon carte', 'type' => 'Service a table']]],
+<<<<<<< HEAD
 ];
 
+=======
+];
+
+>>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
 $seasonal_snacks = [
     ['id' => 'curious-labyrinth-ice-cream', 'park' => 'Disneyland Park', 'name' => 'Curious Labyrinth Ice Cream', 'location' => 'March Hare Refreshments', 'land' => 'Fantasyland', 'price' => '7 EUR', 'season' => 'Alice / Printemps', 'image' => 'assets/images/snack-curious-labyrinth.png', 'summary' => 'Le snack photo le plus facile a montrer dans une rubrique saisonniere.', 'source' => 'Carte officielle March Hare Refreshments'],
     ['id' => 'cheshire-choco-shake', 'park' => 'Disneyland Park', 'name' => 'Cheshire Choco Shake', 'location' => 'March Hare Refreshments', 'land' => 'Fantasyland', 'price' => '9 EUR', 'season' => 'Alice / Printemps', 'image' => 'assets/images/snack-cheshire-shake.png', 'summary' => 'Boisson dessert tres forte visuellement, parfaite pour une carte coup de coeur.', 'source' => 'Carte officielle March Hare Refreshments'],
@@ -794,8 +807,13 @@ $seasonal_snacks = [
     ['id' => 'frozen-snack-watch', 'park' => 'Disney Adventure World', 'name' => 'Douceur World of Frozen', 'location' => 'Quick service World of Frozen', 'land' => 'World of Frozen', 'price' => 'Carte du moment', 'season' => 'World of Frozen', 'image' => 'assets/images/snack-milkshake.png', 'summary' => 'Un slot parfait pour enrichir plus tard la page avec tes propres photos terrain du nouveau land.', 'source' => 'Offre snack officielle a surveiller sur place'],
     ['id' => 'liberty-lollipop', 'park' => 'Disney Adventure World', 'name' => 'Liberty Lollipop', 'location' => 'FAN-tastic Food Truck', 'land' => 'Marvel Avengers Campus', 'price' => 'Carte du moment', 'season' => 'Campus snack', 'image' => 'assets/images/snack-unbirthday.png', 'summary' => 'Le genre de petit produit visuel qui marche tres bien en repere mobile quand on veut grignoter sans quitter Avengers Campus.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026'],
     ['id' => 'choco-blast', 'park' => 'Disney Adventure World', 'name' => 'Choco-Blast', 'location' => 'Super Diner', 'land' => 'Marvel Avengers Campus', 'price' => 'Carte du moment', 'season' => 'Campus snack', 'image' => 'assets/images/snack-milkshake.png', 'summary' => 'Un vrai repere fan pour les visiteurs qui veulent un snack identitaire plutot qu un simple cafe de passage.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026'],
+<<<<<<< HEAD
 ];
 
+=======
+];
+
+>>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
 $reservation_tips = [
     ['tag' => 'Officiel', 'title' => 'Les reservations ouvrent tot', 'copy' => 'Disneyland Paris indique que la plupart des restaurants ouvrent les reservations jusqu a 2 mois a l avance, ou des la confirmation du sejour pour les visiteurs des Hotels Disney.'],
     ['tag' => 'Fan move', 'title' => 'Walt s, Captain Jack s et Regal View meritent un rappel calendrier', 'copy' => 'Place-toi un rappel le jour d ouverture des reservations, puis reviens verifier la veille et le matin meme car les annulations tombent souvent par vagues.'],
