@@ -53,25 +53,40 @@
             return;
         }
 
-        const buttons = $$("[data-filter]", root);
+        const buttons = $$("[data-filter-group]", root);
         const cards = $$("[data-food-card]");
+        const state = {
+            diet: "all",
+            service: "all",
+            land: "all",
+        };
 
-        function render(filter) {
+        function render() {
             buttons.forEach((button) => {
-                button.classList.toggle("is-active", button.dataset.filter === filter);
+                const group = button.dataset.filterGroup;
+                const value = button.dataset.filterValue;
+                const active = state[group] === value;
+                button.classList.toggle("is-active", active);
+                button.classList.toggle("active", active);
             });
 
             cards.forEach((card) => {
-                const visible = filter === "all" || card.dataset[filter] === "1";
+                const dietVisible = state.diet === "all" || card.dataset[state.diet] === "1";
+                const serviceVisible = state.service === "all" || card.dataset.service === state.service;
+                const landVisible = state.land === "all" || card.dataset.landKey === state.land;
+                const visible = dietVisible && serviceVisible && landVisible;
                 card.classList.toggle("is-hidden", !visible);
             });
         }
 
         buttons.forEach((button) => {
-            button.addEventListener("click", () => render(button.dataset.filter));
+            button.addEventListener("click", () => {
+                state[button.dataset.filterGroup] = button.dataset.filterValue;
+                render();
+            });
         });
 
-        render("all");
+        render();
     }
 
     function initBudgetCalculator() {

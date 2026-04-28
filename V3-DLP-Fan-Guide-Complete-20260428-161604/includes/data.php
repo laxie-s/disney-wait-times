@@ -25,6 +25,26 @@ function normalizeName($value)
     return $value ?? '';
 }
 
+function tokenizeName($value)
+{
+    $value = html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    if (function_exists('iconv')) {
+        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if ($converted !== false) {
+            $value = $converted;
+        }
+    }
+
+    $value = strtolower($value);
+    $parts = preg_split('/[^a-z0-9]+/', $value) ?: [];
+    $stopWords = ['a', 'an', 'and', 'the', 'of', 'de', 'du', 'des', 'la', 'le', 'les', 'et', 'd', 'l'];
+
+    return array_values(array_filter(array_unique($parts), function ($part) use ($stopWords) {
+        return strlen($part) >= 2 && !in_array($part, $stopWords, true);
+    }));
+}
+
 function initials($value)
 {
     preg_match_all('/\b([A-Za-z])/', (string) $value, $matches);
@@ -77,6 +97,7 @@ function buildLiveLookup($rawAttractions)
             'source_name' => $name,
             'wait_time' => is_numeric($waitTime) ? (int) $waitTime : null,
             'status' => is_numeric($waitTime) ? 'open' : 'closed',
+            'tokens' => tokenizeName($name),
         ];
 
         if (!isset($lookup[$key]) || $candidate['status'] === 'open') {
@@ -87,19 +108,71 @@ function buildLiveLookup($rawAttractions)
     return $lookup;
 }
 
+function findLiveLookupMatch($candidateNames, $liveLookup)
+{
+    $candidateKeys = [];
+
+    foreach ($candidateNames as $candidateName) {
+        $key = normalizeName($candidateName);
+        if ($key === '') {
+            continue;
+        }
+
+        $candidateKeys[] = $key;
+        if (isset($liveLookup[$key])) {
+            return $liveLookup[$key];
+        }
+    }
+
+    foreach (array_unique($candidateKeys) as $candidateKey) {
+        foreach ($liveLookup as $liveKey => $liveItem) {
+            if ($liveKey === '') {
+                continue;
+            }
+
+            $minLength = min(strlen($candidateKey), strlen($liveKey));
+            if ($minLength < 8) {
+                continue;
+            }
+
+            if (str_contains($liveKey, $candidateKey) || str_contains($candidateKey, $liveKey)) {
+                return $liveItem;
+            }
+        }
+    }
+
+    foreach ($candidateNames as $candidateName) {
+        $candidateTokens = tokenizeName($candidateName);
+        if (empty($candidateTokens)) {
+            continue;
+        }
+
+        foreach ($liveLookup as $liveItem) {
+            $liveTokens = $liveItem['tokens'] ?? [];
+            if (empty($liveTokens)) {
+                continue;
+            }
+
+            if (count(array_diff($candidateTokens, $liveTokens)) === 0) {
+                return $liveItem;
+            }
+        }
+    }
+
+    return null;
+}
+
 function resolveAttractionState($attraction, $liveLookup, $liveAvailable)
 {
     $candidateNames = array_merge([$attraction['name']], $attraction['aliases'] ?? []);
 
-    foreach ($candidateNames as $candidateName) {
-        $key = normalizeName($candidateName);
-        if ($key !== '' && isset($liveLookup[$key])) {
-            return array_merge($attraction, [
-                'status' => $liveLookup[$key]['status'],
-                'wait_time' => $liveLookup[$key]['wait_time'],
-                'live_name' => $liveLookup[$key]['source_name'],
-            ]);
-        }
+    $match = findLiveLookupMatch($candidateNames, $liveLookup);
+    if ($match !== null) {
+        return array_merge($attraction, [
+            'status' => $match['status'],
+            'wait_time' => $match['wait_time'],
+            'live_name' => $match['source_name'],
+        ]);
     }
 
     return array_merge($attraction, [
@@ -214,7 +287,6 @@ function waitAlertProfileForAttraction($name, $profiles)
 
 function recordWaitHistory($catalogue)
 {
-<<<<<<< HEAD
     $records = readJsonStore('wait-history.json', []);
 
     if (empty($catalogue)) {
@@ -233,13 +305,6 @@ function recordWaitHistory($catalogue)
         return $records;
     }
 
-=======
-    if (empty($catalogue)) {
-        return [];
-    }
-
-    $records = readJsonStore('wait-history.json', []);
->>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
     $lastRecord = !empty($records) ? $records[count($records) - 1] : null;
     $now = time();
 
@@ -470,7 +535,7 @@ $structure_land = [
         ['name' => 'Star Tours: The Adventures Continue', 'aliases' => ['Star Tours: The Adventures Continue*'], 'summary' => 'Simulateur qui peut devenir un excellent plan de repli.', 'tip' => 'Tres bon compromis quand on veut garder l energie du land sans tout ralentir.'],
         ['name' => 'Buzz Lightyear Laser Blast', 'aliases' => [], 'summary' => 'Valeur sure famille et competitivite legere.', 'tip' => 'A glisser facilement entre deux priorites plus tendues.'],
         ['name' => 'Les Mysteres du Nautilus', 'aliases' => ['Les Mysteres du Nautilus'], 'summary' => 'Walkthrough calme, dense visuellement et tres fan-compatible.', 'tip' => 'Excellent candidat pour un format details caches par scene.'],
-        ['name' => 'Orbitron', 'aliases' => ['Orbitron'], 'summary' => 'Attraction courte avec point de vue utile sur la zone.', 'tip' => 'Le bon choix quand on veut du visuel sans trop immobiliser le groupe.'],
+        ['name' => 'Orbitron', 'aliases' => ['Orbitron', 'Orbitron Machines Volantes'], 'summary' => 'Attraction courte avec point de vue utile sur la zone.', 'tip' => 'Le bon choix quand on veut du visuel sans trop immobiliser le groupe.'],
         ['name' => 'Autopia', 'aliases' => ['Autopia, presented by Avis'], 'summary' => 'Classique familial a lire avec un vrai contexte d attente.', 'tip' => 'A recommander surtout quand l intention famille est deja tres claire.'],
     ],
     'Fantasyland' => [
@@ -487,7 +552,7 @@ $structure_land = [
     ],
     'Adventureland' => [
         ['name' => 'Pirates of the Caribbean', 'aliases' => [], 'summary' => 'Immersion massive et excellente carte d arbitrage.', 'tip' => 'Tres souvent un meilleur choix qu on ne l imagine au premier regard.'],
-        ['name' => 'Indiana Jones and the Temple of Peril', 'aliases' => ['Indiana Jones and the Temple of Peril'], 'summary' => 'Coaster court, net et tres lisible cote sensations.', 'tip' => 'Un bon candidat des qu une fenetre d attente raisonnable se presente.'],
+        ['name' => 'Indiana Jones and the Temple of Peril', 'aliases' => ['Indiana Jones and the Temple of Peril', 'Indiana Jones et le Temple du Peril'], 'summary' => 'Coaster court, net et tres lisible cote sensations.', 'tip' => 'Un bon candidat des qu une fenetre d attente raisonnable se presente.'],
         ['name' => 'Adventure Isle', 'aliases' => [], 'summary' => 'Zone libre a forte valeur d exploration.', 'tip' => 'Super terrain pour faire respirer une journee sans la vider.'],
         ['name' => 'La Cabane des Robinson', 'aliases' => [], 'summary' => 'Parcours vertical qui enrichit la visite au-dela des rides.', 'tip' => 'Tres bon angle pour des contenus fan originaux.'],
         ['name' => "Pirates' Beach", 'aliases' => [], 'summary' => 'Pause simple et efficace pour les groupes avec enfants.', 'tip' => 'A garder comme soupape quand la densite monte partout.'],
@@ -505,7 +570,7 @@ $structure_land = [
         ['name' => 'Cars ROAD TRIP', 'aliases' => ['Cars Road Trip'], 'summary' => 'Pause familiale plus souple et utile en reequilibrage.', 'tip' => 'Tres bon mouvement quand il faut faire redescendre l intensite du groupe.'],
         ['name' => 'RC Racer', 'aliases' => [], 'summary' => 'Mini dose sensations a fort impact visuel.', 'tip' => 'A glisser quand le timing Pixar est favorable.'],
         ['name' => 'Toy Soldiers Parachute Drop', 'aliases' => [], 'summary' => 'Repere famille qui peut monter vite dans le desordre.', 'tip' => 'A traiter comme une vraie priorite si le groupe est tres Toy Story.'],
-        ['name' => 'Slinky Dog Zigzag Spin', 'aliases' => [], 'summary' => 'Attraction courte et simple pour les plus jeunes.', 'tip' => 'Bonne relance entre deux files plus engageantes.'],
+        ['name' => 'Slinky Dog Zigzag Spin', 'aliases' => ['Slinky Dog Zig Zag Spin'], 'summary' => 'Attraction courte et simple pour les plus jeunes.', 'tip' => 'Bonne relance entre deux files plus engageantes.'],
         ['name' => 'Cars Quatre Roues Rallye', 'aliases' => ['Cars Quatre Roues Rallye'], 'summary' => 'Classique famille compact et efficace.', 'tip' => 'A garder comme soupape de milieu de parcours.'],
     ],
     'Adventure Way' => [
@@ -792,13 +857,8 @@ $dining_spots = [
     ['id' => 'web-food-truck', 'park' => 'Disney Adventure World', 'name' => 'WEB Food Truck', 'land' => 'Marvel Avengers Campus', 'service' => 'Food truck', 'booking' => 'Sans reservation', 'vegan' => true, 'vegetarian' => true, 'gluten_support' => false, 'support_label' => 'Tofu fume et allergenes a confirmer sur place', 'why' => 'Parfait quand le groupe veut garder le rythme du Campus sans couper la dynamique pour une vraie pause a table.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026', 'items' => [['name' => 'Nouilles poulet, crevettes ou tofu fume', 'price' => 'Selon carte', 'type' => 'Food truck']]],
     ['id' => 'fan-tastic', 'park' => 'Disney Adventure World', 'name' => 'FAN-tastic Food Truck', 'land' => 'Marvel Avengers Campus', 'service' => 'Food truck', 'booking' => 'Sans reservation', 'vegan' => true, 'vegetarian' => true, 'gluten_support' => false, 'support_label' => 'Hot-dog veggie et produits sucres selon carte', 'why' => 'Le spot le plus pratique pour un snack mobile si tu surveilles une baisse de wait sur Spider-Man ou Flight Force.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026', 'items' => [['name' => 'Hot-dogs gourmands et vegan cookie', 'price' => 'Selon carte', 'type' => 'Food truck']]],
     ['id' => 'chez-remy', 'park' => 'Disney Adventure World', 'name' => 'Bistrot Chez Remy', 'land' => 'Worlds of Pixar', 'service' => 'Service a table', 'booking' => 'Reservation tres conseillee', 'vegan' => false, 'vegetarian' => true, 'gluten_support' => true, 'support_label' => 'Verifier les options du jour et allergenes', 'why' => 'Toujours une des tables les plus demandees du deuxieme parc, avec un vrai capital affectif pour les visiteurs Pixar.', 'source' => 'Menu officiel consulte le 28 avril 2026', 'items' => [['name' => 'Cuisine de bistrot inspiree de Ratatouille', 'price' => 'Selon carte', 'type' => 'Service a table']]],
-<<<<<<< HEAD
 ];
 
-=======
-];
-
->>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
 $seasonal_snacks = [
     ['id' => 'curious-labyrinth-ice-cream', 'park' => 'Disneyland Park', 'name' => 'Curious Labyrinth Ice Cream', 'location' => 'March Hare Refreshments', 'land' => 'Fantasyland', 'price' => '7 EUR', 'season' => 'Alice / Printemps', 'image' => 'assets/images/snack-curious-labyrinth.png', 'summary' => 'Le snack photo le plus facile a montrer dans une rubrique saisonniere.', 'source' => 'Carte officielle March Hare Refreshments'],
     ['id' => 'cheshire-choco-shake', 'park' => 'Disneyland Park', 'name' => 'Cheshire Choco Shake', 'location' => 'March Hare Refreshments', 'land' => 'Fantasyland', 'price' => '9 EUR', 'season' => 'Alice / Printemps', 'image' => 'assets/images/snack-cheshire-shake.png', 'summary' => 'Boisson dessert tres forte visuellement, parfaite pour une carte coup de coeur.', 'source' => 'Carte officielle March Hare Refreshments'],
@@ -807,13 +867,8 @@ $seasonal_snacks = [
     ['id' => 'frozen-snack-watch', 'park' => 'Disney Adventure World', 'name' => 'Douceur World of Frozen', 'location' => 'Quick service World of Frozen', 'land' => 'World of Frozen', 'price' => 'Carte du moment', 'season' => 'World of Frozen', 'image' => 'assets/images/snack-milkshake.png', 'summary' => 'Un slot parfait pour enrichir plus tard la page avec tes propres photos terrain du nouveau land.', 'source' => 'Offre snack officielle a surveiller sur place'],
     ['id' => 'liberty-lollipop', 'park' => 'Disney Adventure World', 'name' => 'Liberty Lollipop', 'location' => 'FAN-tastic Food Truck', 'land' => 'Marvel Avengers Campus', 'price' => 'Carte du moment', 'season' => 'Campus snack', 'image' => 'assets/images/snack-unbirthday.png', 'summary' => 'Le genre de petit produit visuel qui marche tres bien en repere mobile quand on veut grignoter sans quitter Avengers Campus.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026'],
     ['id' => 'choco-blast', 'park' => 'Disney Adventure World', 'name' => 'Choco-Blast', 'location' => 'Super Diner', 'land' => 'Marvel Avengers Campus', 'price' => 'Carte du moment', 'season' => 'Campus snack', 'image' => 'assets/images/snack-milkshake.png', 'summary' => 'Un vrai repere fan pour les visiteurs qui veulent un snack identitaire plutot qu un simple cafe de passage.', 'source' => 'Page officielle Disneyland Paris consultee le 28 avril 2026'],
-<<<<<<< HEAD
 ];
 
-=======
-];
-
->>>>>>> defbc4b27fd3ed21a6994795ba1cf66569d87d27
 $reservation_tips = [
     ['tag' => 'Officiel', 'title' => 'Les reservations ouvrent tot', 'copy' => 'Disneyland Paris indique que la plupart des restaurants ouvrent les reservations jusqu a 2 mois a l avance, ou des la confirmation du sejour pour les visiteurs des Hotels Disney.'],
     ['tag' => 'Fan move', 'title' => 'Walt s, Captain Jack s et Regal View meritent un rappel calendrier', 'copy' => 'Place-toi un rappel le jour d ouverture des reservations, puis reviens verifier la veille et le matin meme car les annulations tombent souvent par vagues.'],

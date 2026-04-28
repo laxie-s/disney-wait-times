@@ -226,8 +226,8 @@ renderHeader('home', $site, $nav_items);
             <a class="text-link" href="news.php">Toutes les actus</a>
         </div>
 
-        <div class="news-highlight-grid">
-            <article class="featured-story">
+        <div class="story-grid news-home-grid">
+            <article class="featured-story featured-story-compact">
                 <div class="card-row">
                     <span class="pill soft-blue"><?php echo e($featuredArticle['category']); ?></span>
                     <span class="pill soft-gold"><?php echo e($featuredArticle['park']); ?></span>
@@ -241,19 +241,17 @@ renderHeader('home', $site, $nav_items);
                 <a href="article.php?slug=<?php echo urlencode($featuredArticle['slug']); ?>">Lire l article</a>
             </article>
 
-            <div class="story-stack">
-                <?php foreach ($secondaryArticles as $article) : ?>
-                    <article class="story-card">
-                        <div class="card-row">
-                            <span class="pill soft-gold"><?php echo e($article['cover_label']); ?></span>
-                            <span class="pill soft-blue"><?php echo e($article['park']); ?></span>
-                        </div>
-                        <h3><?php echo e($article['title']); ?></h3>
-                        <p><?php echo e($article['excerpt']); ?></p>
-                        <a href="article.php?slug=<?php echo urlencode($article['slug']); ?>">Ouvrir</a>
-                    </article>
-                <?php endforeach; ?>
-            </div>
+            <?php foreach ($secondaryArticles as $article) : ?>
+                <article class="story-card">
+                    <div class="card-row">
+                        <span class="pill soft-gold"><?php echo e($article['cover_label']); ?></span>
+                        <span class="pill soft-blue"><?php echo e($article['park']); ?></span>
+                    </div>
+                    <h3><?php echo e($article['title']); ?></h3>
+                    <p><?php echo e($article['excerpt']); ?></p>
+                    <a href="article.php?slug=<?php echo urlencode($article['slug']); ?>">Ouvrir</a>
+                </article>
+            <?php endforeach; ?>
         </div>
     </section>
 </main>
