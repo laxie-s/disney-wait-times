@@ -15,6 +15,10 @@ $visible_watchlist = array_values(array_filter($maintenance_watchlist, function 
     return $park_choisi === null || $item['park'] === 'Resort' || $item['park'] === $park_choisi;
 }));
 
+$official_watch_count = count(array_filter($visible_watchlist, function ($item) {
+    return $item['status'] === 'Officiel';
+}));
+
 renderHead('Fermetures et rehabilitations', 'Vue claire des fermetures du jour et des transformations a surveiller.', $site);
 renderHeader('maintenance', $site, $nav_items);
 ?>
@@ -45,13 +49,38 @@ renderHeader('maintenance', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <nav class="chip-nav secondary" aria-label="Navigation maintenance">
+            <a href="#maintenance-today" class="chip-link">Aujourd hui</a>
+            <a href="#maintenance-watch" class="chip-link">Prospectif</a>
+        </nav>
     </section>
 
     <section class="shell section-shell tight-top">
+        <div class="feature-grid">
+            <article class="feature-card">
+                <span class="pill soft-rose"><?php echo e(count($visible_current_closures)); ?> fermetures</span>
+                <h3>Le besoin du jour</h3>
+                <p>La premiere lecture utile reste toujours ce qui est ferme maintenant dans le parc que tu visites.</p>
+            </article>
+            <article class="feature-card">
+                <span class="pill soft-blue"><?php echo e($official_watch_count); ?> points officiels</span>
+                <h3>Les vrais chantiers a suivre</h3>
+                <p>Le prospectif prend du sens surtout depuis la mutation de Disney Adventure World et de Disney Village.</p>
+            </article>
+            <article class="feature-card">
+                <span class="pill soft-gold"><?php echo e(count($visible_watchlist)); ?> veilles</span>
+                <h3>Ce qui peut influer ta visite</h3>
+                <p>Une fermeture annoncee ou une zone en travaux change souvent le tempo, les flux et les repas d une journee.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="shell section-shell" id="maintenance-today">
         <div class="section-head inline-head">
             <div>
                 <p class="eyebrow">Aujourd hui</p>
-                <h2>Fermetures et elements a verifier dans le flux du moment.</h2>
+                <h2>Fermetures remontees et points de veille du moment.</h2>
             </div>
             <span class="quiet-note"><?php echo e($source_notes['maintenance']); ?></span>
         </div>
@@ -85,7 +114,7 @@ renderHeader('maintenance', $site, $nav_items);
         <?php endif; ?>
     </section>
 
-    <section class="shell section-shell">
+    <section class="shell section-shell" id="maintenance-watch">
         <div class="section-head">
             <p class="eyebrow">Calendrier prospectif</p>
             <h2>Les grands points de veille sur les prochains mois.</h2>

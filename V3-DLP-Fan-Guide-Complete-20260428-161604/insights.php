@@ -144,6 +144,21 @@ function crowdLabelFromScore($score)
     return 'Souple';
 }
 
+function crowdSignalShortLabel($signal)
+{
+    $map = [
+        'week-end' => 'WE',
+        'Pays-Bas' => 'NL',
+        'Espagne' => 'ES',
+        'Royaume-Uni' => 'UK',
+        'haute saison' => 'HS',
+        'Halloween' => 'HAL',
+        'Noel' => 'NOEL',
+    ];
+
+    return $map[$signal] ?? strtoupper(substr($signal, 0, 3));
+}
+
 function buildCrowdMonths($startMonth, $count, $windows)
 {
     $labels = [1 => 'Janvier', 2 => 'Fevrier', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Aout', 9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Decembre'];
@@ -218,19 +233,15 @@ $trend_candidates = array_values(array_filter($flat_catalogue, function ($item) 
     if ($park_choisi !== null && $item['park'] !== $park_choisi) {
         return false;
     }
-    return $item['status'] === 'open' || in_array($item['name'], ['Frozen Ever After', 'Orbitron', 'Avengers Assemble: Flight Force', "Crush's Coaster"], true);
+    return true;
 }));
 
 usort($trend_candidates, function ($left, $right) {
-    $leftWait = is_numeric($left['wait_time']) ? (int) $left['wait_time'] : 999;
-    $rightWait = is_numeric($right['wait_time']) ? (int) $right['wait_time'] : 999;
-    if ($leftWait === $rightWait) {
+    if ($left['park'] === $right['park']) {
         return strcmp($left['name'], $right['name']);
     }
-    return $rightWait <=> $leftWait;
+    return strcmp($left['park'], $right['park']);
 });
-
-$trend_candidates = array_slice($trend_candidates, 0, 8);
 if (empty($trend_candidates)) {
     $trend_candidates = [
         ['name' => 'Big Thunder Mountain', 'land' => 'Frontierland', 'park' => 'Disneyland Park', 'wait_time' => 40, 'status' => 'open'],
@@ -271,6 +282,7 @@ foreach ($trend_candidates as $candidate) {
         'days' => (int) ($profile['days'] ?? 0),
         'direction' => trendDirectionLabel($trendData['points'], $current_hour),
         'target_wait' => (int) ($profile['target_wait'] ?? 15),
+        'great_wait' => (int) ($profile['great_wait'] ?? 10),
         'typical_wait' => (int) ($profile['typical_wait'] ?? $profile['avg_wait'] ?? $waitTime),
         'points' => $trendData['points'],
     ];
@@ -279,6 +291,7 @@ foreach ($trend_candidates as $candidate) {
         'name' => $candidate['name'],
         'park' => $candidate['park'],
         'target_wait' => (int) ($profile['target_wait'] ?? 15),
+        'great_wait' => (int) ($profile['great_wait'] ?? 10),
         'typical_wait' => (int) ($profile['typical_wait'] ?? $profile['avg_wait'] ?? $waitTime),
         'days' => (int) ($profile['days'] ?? 0),
     ];
@@ -297,7 +310,7 @@ $crowd_months = buildCrowdMonths(date('Y-m'), $months_view, $holiday_windows);
 $page_title = $park_choisi ? 'Stats - ' . $park_choisi : 'Stats et affluence';
 $page_description = $park_choisi
     ? 'Lecture des tendances et de l affluence pour ' . $park_choisi . '.'
-    : 'Courbes d attente indicatives et estimation d affluence sur les deux parcs.';
+    : 'Historique d attente et lecture d affluence sur les deux parcs.';
 
 renderHead($page_title, $page_description, $site);
 renderHeader('insights', $site, $nav_items);
@@ -350,9 +363,19 @@ renderHeader('insights', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <div class="page-anchor-wrap">
+            <span class="meta-label">Sommaire de la page</span>
+            <nav class="chip-nav secondary page-anchor-nav" aria-label="Sommaire stats">
+                <a href="#insights-parks" class="chip-link">Lecture par parc</a>
+                <a href="#insights-trends" class="chip-link">Historique</a>
+                <a href="#insights-thresholds" class="chip-link">Seuils cibles</a>
+                <a href="#insights-calendar" class="chip-link">Calendrier</a>
+            </nav>
+        </div>
     </section>
 
-    <section class="shell section-shell tight-top">
+    <section class="shell section-shell tight-top" id="insights-parks">
         <div class="park-grid">
             <?php foreach ($park_profiles as $parkName => $profile) : ?>
                 <?php if ($park_choisi !== null && $parkName !== $park_choisi) {
@@ -366,75 +389,113 @@ renderHeader('insights', $site, $nav_items);
                     </div>
                     <h3><?php echo e($profile['headline']); ?></h3>
                     <p><?php echo e($profile['focus']); ?></p>
-                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne a confirmer'; ?></small>
+                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne non disponible'; ?></small>
                 </article>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <section class="shell section-shell">
-        <div class="two-column-tools trend-layout">
-            <article class="tool-panel" data-trend-app>
-                <div class="section-head compact-head">
-                    <p class="eyebrow">Historique heure par heure</p>
-                    <h2>La file monte ou se detend generalement a cette heure-ci ?</h2>
-                </div>
+    <section class="shell section-shell" id="insights-trends">
+        <article class="tool-panel trend-panel" data-trend-app>
+            <div class="section-head compact-head">
+                <p class="eyebrow">Historique heure par heure</p>
+                <h2>La file monte ou se detend generalement a cette heure-ci ?</h2>
+            </div>
 
-                <div class="trend-toolbar">
-                    <label class="select-field">
-                        <span>Attraction suivie</span>
-                        <select data-trend-select>
-                            <?php foreach ($trend_payload as $item) : ?>
-                                <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name'] . ' - ' . $item['park']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </label>
-                    <div class="trend-summary">
-                        <span class="meta-label">Lecture</span>
-                        <strong data-trend-status>--</strong>
-                        <small data-trend-caption>--</small>
-                    </div>
+            <div class="trend-toolbar">
+                <label class="select-field">
+                    <span>Attraction suivie</span>
+                    <select data-trend-select>
+                        <?php foreach ($trend_payload as $item) : ?>
+                            <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name'] . ' - ' . $item['park']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <div class="trend-summary">
+                    <span class="meta-label">Lecture</span>
+                    <strong data-trend-status>--</strong>
+                    <small data-trend-caption>--</small>
                 </div>
+            </div>
 
-                <div class="trend-chart-card">
-                    <svg viewBox="0 0 720 260" class="trend-svg" data-trend-svg aria-label="Courbe d attente"></svg>
-                    <div class="trend-axis" data-trend-axis></div>
-                </div>
-            </article>
-
-            <article class="tool-panel">
-                <div class="section-head compact-head">
-                    <p class="eyebrow">Calendrier d affluence</p>
-                    <h2>Un horizon plus long pour les visiteurs qui veulent se projeter loin.</h2>
-                    <p><?php echo e($source_notes['crowd']); ?></p>
-                </div>
-
-                <div class="calendar-legend">
-                    <span class="legend-chip level-calm">Souple</span>
-                    <span class="legend-chip level-busy">Soutenue</span>
-                    <span class="legend-chip level-high">Chargee</span>
-                    <span class="legend-chip level-peak">Tres forte</span>
-                </div>
-
-                <div class="stack-grid">
-                    <?php foreach ($threshold_cards as $item) : ?>
-                        <article class="mini-surface">
-                            <div class="card-row">
-                                <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
-                                <span class="pill soft-gold">Vise <?php echo e($item['target_wait']); ?> min</span>
-                            </div>
-                            <h3><?php echo e($item['name']); ?></h3>
-                            <p>Lecture typique autour de <?php echo e($item['typical_wait']); ?> min quand le resort est dans une journee standard.</p>
-                            <small class="quiet-note"><?php echo e($item['days']); ?> jour(s) de recul pour cette estimation.</small>
-                        </article>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-        </div>
+            <div class="trend-chart-card">
+                <svg viewBox="0 0 720 260" class="trend-svg" data-trend-svg aria-label="Courbe d attente"></svg>
+                <div class="trend-axis" data-trend-axis></div>
+            </div>
+        </article>
         <script type="application/json" id="trend-dataset"><?php echo json_encode($trend_payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
     </section>
 
-    <section class="shell section-shell">
+    <section class="shell section-shell" id="insights-thresholds">
+        <div class="section-head inline-head">
+            <div>
+                <p class="eyebrow">Seuils cibles</p>
+                <h2>Des reperes utiles, puis un seuil perso selon tes vraies priorites.</h2>
+            </div>
+            <span class="quiet-note">Nos recommandations servent de base, mais le fan peut maintenant choisir lui-meme son objectif sur chaque attraction.</span>
+        </div>
+
+        <article class="tool-panel threshold-planner" data-threshold-planner>
+            <div class="section-head compact-head">
+                <p class="eyebrow">Planner fan</p>
+                <h2>Teste ton vrai seuil avant de te fixer une alerte ou une strategie.</h2>
+                <p>Tu choisis l attraction et la duree que tu es pret a accepter. Le site te dit ensuite si tu vises un tres bon slot, un bon compromis ou juste une attente confortable.</p>
+            </div>
+
+            <div class="threshold-planner-grid">
+                <label class="select-field">
+                    <span>Attraction</span>
+                    <select data-threshold-select>
+                        <?php foreach ($trend_payload as $item) : ?>
+                            <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name'] . ' - ' . $item['park']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label class="select-field">
+                    <span>Duree visee en minutes</span>
+                    <input type="number" min="5" max="180" step="5" value="<?php echo !empty($trend_payload) ? e((string) $trend_payload[0]['target_wait']) : '20'; ?>" data-threshold-target>
+                </label>
+            </div>
+
+            <div class="threshold-recommendation" data-threshold-feedback>
+                Selectionne une attraction pour afficher une lecture plus precise.
+            </div>
+        </article>
+
+        <div class="story-grid threshold-grid">
+            <?php foreach ($threshold_cards as $item) : ?>
+                <article class="story-card threshold-card">
+                    <div class="card-row">
+                        <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
+                        <span class="pill soft-gold">Reco <?php echo e($item['target_wait']); ?> min</span>
+                    </div>
+                    <h3><?php echo e($item['name']); ?></h3>
+                    <p>Tres bon slot sous <?php echo e($item['great_wait']); ?> min. En lecture standard, l attraction tourne plutot autour de <?php echo e($item['typical_wait']); ?> min.</p>
+                    <small class="quiet-note"><?php echo e($item['days']); ?> jour(s) d historique pour cette lecture.</small>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="shell section-shell" id="insights-calendar">
+        <article class="tool-panel calendar-intro-panel">
+            <div class="section-head compact-head">
+                <p class="eyebrow">Calendrier d affluence</p>
+                <h2>Un horizon plus long pour les visiteurs qui veulent se projeter loin.</h2>
+                <p><?php echo e($source_notes['crowd']); ?></p>
+            </div>
+
+            <div class="calendar-legend">
+                <span class="legend-chip level-calm">Souple</span>
+                <span class="legend-chip level-busy">Soutenue</span>
+                <span class="legend-chip level-high">Chargee</span>
+                <span class="legend-chip level-peak">Tres forte</span>
+            </div>
+        </article>
+    </section>
+
+    <section class="shell section-shell tight-top">
         <div class="calendar-grid">
             <?php foreach ($crowd_months as $month) : ?>
                 <article class="calendar-card">
@@ -454,10 +515,14 @@ renderHeader('insights', $site, $nav_items);
                             <?php if (!empty($day['pad'])) : ?>
                                 <div class="calendar-day is-pad"></div>
                             <?php else : ?>
-                                <div class="calendar-day level-<?php echo e($day['level']); ?>" title="<?php echo e($day['label']); ?>">
+                                <?php
+                                $signal_labels = array_map('crowdSignalShortLabel', array_slice($day['signals'], 0, 2));
+                                $signal_full = implode(' / ', $day['signals']);
+                                ?>
+                                <div class="calendar-day level-<?php echo e($day['level']); ?>" title="<?php echo e(trim($day['label'] . ($signal_full ? ' - ' . $signal_full : ''))); ?>">
                                     <strong><?php echo e($day['day']); ?></strong>
                                     <span><?php echo e($day['score']); ?></span>
-                                    <small><?php echo e(implode(' / ', array_slice($day['signals'], 0, 2))); ?></small>
+                                    <small><?php echo e(implode(' - ', $signal_labels)); ?></small>
                                 </div>
                             <?php endif; ?>
                         <?php endforeach; ?>

@@ -12,7 +12,7 @@ function clockToMinutes($value)
     return ((int) $hours * 60) + (int) $minutes;
 }
 
-function showSessionCards($shows, $focusMinutes, $windowStart)
+function showSessionCards($shows, $focusMinutes)
 {
     $sessions = [];
 
@@ -33,8 +33,6 @@ function showSessionCards($shows, $focusMinutes, $windowStart)
                 'location' => $show['location'],
                 'booking' => $show['booking'],
                 'distance' => $distance,
-                'column' => max(1, (int) floor(($start - $windowStart) / 15) + 1),
-                'span' => max(2, (int) ceil(($show['duration'] ?? 30) / 15)),
             ];
         }
     }
@@ -59,21 +57,14 @@ if (!preg_match('/^\d{2}:\d{2}$/', $time_focus)) {
     $time_focus = '17:30';
 }
 
-$window_start = 10 * 60 + 30;
-$window_end = 22 * 60 + 30;
 $focus_minutes = clockToMinutes($time_focus) ?? (17 * 60 + 30);
 
 $visible_shows = array_values(array_filter($show_reference, function ($show) use ($park_choisi) {
     return $park_choisi === null || $show['park'] === $park_choisi;
 }));
 
-$show_sessions = showSessionCards($visible_shows, $focus_minutes, $window_start);
+$show_sessions = showSessionCards($visible_shows, $focus_minutes);
 $nearest_sessions = array_slice($show_sessions, 0, 6);
-$time_markers = [];
-for ($minutes = $window_start; $minutes <= $window_end; $minutes += 60) {
-    $time_markers[] = sprintf('%02d:%02d', (int) floor($minutes / 60), $minutes % 60);
-}
-
 $program_dataset = [
     'focus' => $time_focus,
     'sessions' => $show_sessions,
@@ -89,7 +80,7 @@ renderHeader('shows', $site, $nav_items);
             <h1>Visualiser la journee en grille plutot que chasser les horaires show par show.</h1>
             <p>
                 Cette page sert a voir vite ce qui tombe autour d une heure cible.
-                Les horaires exacts restent a verifier le jour meme, mais la lecture devient beaucoup plus confortable.
+                Les horaires du jour se confirment sur le programme officiel, mais cette grille rend la lecture beaucoup plus confortable.
             </p>
         </div>
 
@@ -122,9 +113,18 @@ renderHeader('shows', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <div class="page-anchor-wrap">
+            <span class="meta-label">Sommaire de la page</span>
+            <nav class="chip-nav secondary page-anchor-nav" aria-label="Sommaire shows">
+                <a href="#shows-focus" class="chip-link">Choix horaire</a>
+                <a href="#shows-nearest" class="chip-link">Sessions proches</a>
+                <a href="#shows-program" class="chip-link">Programme complet</a>
+            </nav>
+        </div>
     </section>
 
-    <section class="shell section-shell tight-top">
+    <section class="shell section-shell tight-top" id="shows-focus">
         <div class="two-column-tools">
             <article class="tool-panel" data-show-program>
                 <div class="section-head compact-head">
@@ -144,7 +144,7 @@ renderHeader('shows', $site, $nav_items);
                     <button class="btn btn-secondary" type="submit">Mettre a jour</button>
                 </form>
 
-                <div class="alert-live-list" data-show-nearest-list>
+                <div class="alert-live-list" data-show-nearest-list id="shows-nearest">
                     <?php foreach ($nearest_sessions as $session) : ?>
                         <div class="alert-live-item">
                             <strong><?php echo e($session['time'] . ' - ' . $session['name']); ?></strong>
@@ -178,17 +178,8 @@ renderHeader('shows', $site, $nav_items);
         <script type="application/json" id="show-program-dataset"><?php echo json_encode($program_dataset, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
     </section>
 
-    <section class="shell section-shell">
+    <section class="shell section-shell" id="shows-program">
         <div class="show-program-board">
-            <div class="show-board-head">
-                <div></div>
-                <div class="show-time-scale">
-                    <?php foreach ($time_markers as $marker) : ?>
-                        <span><?php echo e($marker); ?></span>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
             <?php foreach ($visible_shows as $show) : ?>
                 <article class="show-row">
                     <div class="show-row-copy">
@@ -204,7 +195,7 @@ renderHeader('shows', $site, $nav_items);
                         <?php endif; ?>
                     </div>
 
-                    <div class="show-row-timeline">
+                    <div class="show-session-grid">
                         <?php foreach ($show['times'] as $time) : ?>
                             <?php
                             $minutes = clockToMinutes($time);
@@ -212,13 +203,10 @@ renderHeader('shows', $site, $nav_items);
                                 continue;
                             }
                             $distance = abs($minutes - $focus_minutes);
-                            $column = max(1, (int) floor(($minutes - $window_start) / 15) + 1);
-                            $span = max(2, (int) ceil(($show['duration'] ?? 30) / 15));
                             ?>
                             <button
                                 type="button"
                                 class="show-slot<?php echo $distance <= 20 ? ' is-near' : ''; ?>"
-                                style="grid-column: <?php echo e($column); ?> / span <?php echo e($span); ?>;"
                                 data-show-slot
                                 data-show-time="<?php echo e($time); ?>"
                                 data-show-name="<?php echo e($show['name']); ?>"

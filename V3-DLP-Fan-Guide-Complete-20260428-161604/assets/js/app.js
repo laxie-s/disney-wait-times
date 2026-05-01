@@ -53,25 +53,40 @@
             return;
         }
 
-        const buttons = $$("[data-filter]", root);
+        const buttons = $$("[data-filter-group]", root);
         const cards = $$("[data-food-card]");
+        const state = {
+            diet: "all",
+            service: "all",
+            land: "all",
+        };
 
-        function render(filter) {
+        function render() {
             buttons.forEach((button) => {
-                button.classList.toggle("is-active", button.dataset.filter === filter);
+                const group = button.dataset.filterGroup;
+                const value = button.dataset.filterValue;
+                const active = state[group] === value;
+                button.classList.toggle("is-active", active);
+                button.classList.toggle("active", active);
             });
 
             cards.forEach((card) => {
-                const visible = filter === "all" || card.dataset[filter] === "1";
+                const dietVisible = state.diet === "all" || card.dataset[state.diet] === "1";
+                const serviceVisible = state.service === "all" || card.dataset.service === state.service;
+                const landVisible = state.land === "all" || card.dataset.landKey === state.land;
+                const visible = dietVisible && serviceVisible && landVisible;
                 card.classList.toggle("is-hidden", !visible);
             });
         }
 
         buttons.forEach((button) => {
-            button.addEventListener("click", () => render(button.dataset.filter));
+            button.addEventListener("click", () => {
+                state[button.dataset.filterGroup] = button.dataset.filterValue;
+                render();
+            });
         });
 
-        render("all");
+        render();
     }
 
     function initBudgetCalculator() {
@@ -188,6 +203,61 @@
 
         select.addEventListener("change", () => render(select.value));
         render(select.value || dataset[0].id);
+    }
+
+    function initThresholdPlanner() {
+        const root = $("[data-threshold-planner]");
+        const dataset = readJsonScript("trend-dataset");
+        if (!root || !dataset || !Array.isArray(dataset) || !dataset.length) {
+            return;
+        }
+
+        const select = $("[data-threshold-select]", root);
+        const input = $("[data-threshold-target]", root);
+        const feedback = $("[data-threshold-feedback]", root);
+
+        function findItem(id) {
+            return dataset.find((entry) => entry.id === id) || dataset[0];
+        }
+
+        function render() {
+            const item = findItem(select.value || dataset[0].id);
+            const target = Math.max(5, Number(input.value) || item.target_wait || 15);
+            const great = Number(item.great_wait || 10);
+            const recommended = Number(item.target_wait || 15);
+            const typical = Number(item.typical_wait || recommended);
+
+            let label = "Lecture confortable";
+            let copy = "Tu gardes une alerte assez large, utile si tu veux surtout simplifier la decision du moment.";
+
+            if (target <= great) {
+                label = "Objectif tres ambitieux";
+                copy = "Tu vises une vraie fenetre premium. C est excellent si cette attraction est une priorite absolue.";
+            } else if (target <= recommended) {
+                label = "Bon slot fan";
+                copy = "Tu es dans la fenetre que le site recommande pour agir sans trop hesiter.";
+            } else if (target <= typical) {
+                label = "Choix realiste";
+                copy = "Tu restes sous la lecture standard de la file, donc le seuil garde une vraie utilite terrain.";
+            }
+
+            feedback.innerHTML = `
+                <strong>${label}</strong>
+                <span>${item.name} tourne plutot autour de ${typical} min. Reco fan: viser ${recommended} min, et tres bon slot sous ${great} min.</span>
+                <small>${copy}</small>
+            `;
+            select.value = item.id;
+        }
+
+        if (select && input) {
+            select.addEventListener("change", () => {
+                const item = findItem(select.value);
+                input.value = item.target_wait;
+                render();
+            });
+            input.addEventListener("input", render);
+            render();
+        }
     }
 
     function bindCheckboxBoard(rootSelector, checkboxSelector, storageKey, progressSelector) {
@@ -308,7 +378,12 @@
         const endpoint = root.dataset.alertEndpoint || dataset.endpoint;
         const liveList = $("[data-alert-live-list]", root);
         const permissionButton = $("[data-alert-permission]", root);
-        const buttons = $$("[data-watch-action]");
+        const quickButtons = $$("[data-watch-action]");
+        const select = $("[data-alert-select]", root);
+        const thresholdInput = $("[data-alert-threshold]", root);
+        const recommendation = $("[data-alert-recommendation]", root);
+        const addWaitButton = $("[data-alert-add-wait]", root);
+        const addReopenButton = $("[data-alert-add-reopen]", root);
         const storageKey = "dlp-fan-guide-alerts";
         const state = storageGet(storageKey, {});
         let lastSnapshot = Object.fromEntries(dataset.items.map((item) => [item.id, item]));
@@ -333,26 +408,123 @@
             new Notification(title, { body });
         }
 
-        function readWatch(id) {
+        function getWatch(id) {
+            return state[id] || { wait: false, reopen: false, threshold: null, name: "" };
+        }
+
+        function ensureWatch(id, name = "") {
             if (!state[id]) {
-                state[id] = { wait: false, reopen: false, threshold: null, name: "" };
+                state[id] = { wait: false, reopen: false, threshold: null, name };
+            }
+            if (name) {
+                state[id].name = name;
             }
             return state[id];
         }
 
+        function cleanupWatch(id) {
+            const watch = state[id];
+            if (!watch) {
+                return;
+            }
+            if (!watch.wait && !watch.reopen) {
+                delete state[id];
+            }
+        }
+
+        function findItem(id) {
+            return dataset.items.find((item) => item.id === id) || dataset.items[0];
+        }
+
+        function currentBuilderItem() {
+            return select ? findItem(select.value || dataset.items[0].id) : dataset.items[0];
+        }
+
+        function setWatchMode(id, mode, options = {}) {
+            const watch = ensureWatch(id, options.name || "");
+            watch.name = options.name || watch.name;
+            if (mode === "wait") {
+                watch.threshold = Math.max(5, Number(options.threshold || watch.threshold || 15));
+            }
+            watch[mode] = true;
+            storageSet(storageKey, state);
+        }
+
+        function toggleWatchMode(id, mode, options = {}) {
+            const current = getWatch(id);
+            const nextActive = !current[mode];
+
+            if (!nextActive) {
+                const watch = ensureWatch(id, options.name || current.name);
+                watch[mode] = false;
+                cleanupWatch(id);
+                storageSet(storageKey, state);
+                return;
+            }
+
+            setWatchMode(id, mode, options);
+        }
+
+        function removeAlerts(id) {
+            delete state[id];
+            storageSet(storageKey, state);
+            renderButtons();
+            renderLiveList();
+        }
+
+        function renderBuilder() {
+            if (!select || !thresholdInput || !recommendation) {
+                return;
+            }
+
+            const item = currentBuilderItem();
+            const watch = getWatch(item.id);
+            const threshold = Math.max(5, Number(thresholdInput.value) || item.target_wait || 15);
+            const typical = Number(item.typical_wait || item.avg_wait || item.target_wait || threshold);
+            let label = "Lecture confortable";
+            let copy = "Tu demandes une alerte assez large. C est pratique si tu veux surtout garder l attraction dans ton radar.";
+
+            if (threshold <= Number(item.great_wait || 10)) {
+                label = "Objectif tres ambitieux";
+                copy = "Tu vises une vraie fenetre premium. C est top si cette attraction compte vraiment pour ta journee.";
+            } else if (threshold <= Number(item.target_wait || 15)) {
+                label = "Bon slot fan";
+                copy = "Tu es au niveau de recommandation que le site juge vraiment utile pour agir vite.";
+            } else if (threshold <= typical) {
+                label = "Choix realiste";
+                copy = "Tu restes encore sous la lecture standard de la file. Le seuil garde donc un vrai interet terrain.";
+            }
+
+            recommendation.innerHTML = `
+                <strong>${item.name}</strong>
+                <span>${item.park} - ${item.land}. Reco fan: viser ${item.target_wait} min, et tres bon slot sous ${item.great_wait} min. Lecture habituelle autour de ${typical} min.</span>
+                <small>${label}. ${copy}</small>
+            `;
+
+            if (addWaitButton) {
+                addWaitButton.classList.toggle("is-active", Boolean(watch.wait));
+                addWaitButton.textContent = watch.wait ? "Alerte attente active" : "Ajouter une alerte attente";
+            }
+            if (addReopenButton) {
+                addReopenButton.classList.toggle("is-active", Boolean(watch.reopen));
+                addReopenButton.textContent = watch.reopen ? "Alerte sortie de panne active" : "Ajouter une alerte sortie de panne";
+            }
+        }
+
         function renderButtons() {
-            buttons.forEach((button) => {
+            quickButtons.forEach((button) => {
                 const id = button.dataset.watchId;
                 const mode = button.dataset.watchAction;
-                const watch = readWatch(id);
+                const watch = getWatch(id);
                 const active = Boolean(watch[mode]);
                 button.classList.toggle("is-active", active);
                 button.setAttribute("aria-pressed", active ? "true" : "false");
             });
-            storageSet(storageKey, state);
             if (permissionButton) {
                 permissionButton.textContent = permissionLabel();
             }
+            renderBuilder();
+            storageSet(storageKey, state);
         }
 
         function renderLiveList(snapshot = lastSnapshot) {
@@ -370,11 +542,18 @@
                 const modes = [waitLabel, reopenLabel].filter(Boolean).join(" - ");
                 return `
                     <div class="alert-live-item">
-                        <strong>${watch.name}</strong>
-                        <span>${modes} - ${status}</span>
+                        <div class="alert-live-copy">
+                            <strong>${watch.name}</strong>
+                            <span>${modes} - ${status}</span>
+                        </div>
+                        <button type="button" class="action-button subtle" data-alert-remove-id="${id}">Retirer</button>
                     </div>
                 `;
             }).join("");
+
+            $$("[data-alert-remove-id]", liveList).forEach((button) => {
+                button.addEventListener("click", () => removeAlerts(button.dataset.alertRemoveId));
+            });
         }
 
         async function requestPermission() {
@@ -386,18 +565,33 @@
             renderButtons();
         }
 
-        function handleToggle(button) {
+        function handleQuickToggle(button) {
             const id = button.dataset.watchId;
             const mode = button.dataset.watchAction;
-            const watch = readWatch(id);
-            watch.name = button.dataset.watchName || watch.name;
-            if (mode === "wait") {
-                watch.threshold = Number(button.dataset.watchThreshold || watch.threshold || 15);
+            toggleWatchMode(id, mode, {
+                name: button.dataset.watchName || "",
+                threshold: Number(button.dataset.watchThreshold || 15),
+            });
+            renderButtons();
+            renderLiveList();
+        }
+
+        function handleBuilderToggle(mode) {
+            const item = currentBuilderItem();
+            const threshold = Math.max(5, Number(thresholdInput.value) || item.target_wait || 15);
+            const current = getWatch(item.id);
+            const isSameWaitAlert = mode === "wait" && current.wait && Number(current.threshold) === threshold;
+            const isSameReopenAlert = mode === "reopen" && current.reopen;
+
+            if (isSameWaitAlert || isSameReopenAlert) {
+                const watch = ensureWatch(item.id, item.name);
+                watch[mode] = false;
+                cleanupWatch(item.id);
+                storageSet(storageKey, state);
+            } else {
+                setWatchMode(item.id, mode, { name: item.name, threshold });
             }
-            watch[mode] = !watch[mode];
-            if (!watch.wait && !watch.reopen) {
-                delete state[id];
-            }
+
             renderButtons();
             renderLiveList();
         }
@@ -450,10 +644,25 @@
             }
         }
 
-        buttons.forEach((button) => {
-            button.addEventListener("click", () => handleToggle(button));
+        quickButtons.forEach((button) => {
+            button.addEventListener("click", () => handleQuickToggle(button));
         });
 
+        if (select && thresholdInput) {
+            select.addEventListener("change", () => {
+                const item = currentBuilderItem();
+                thresholdInput.value = item.target_wait;
+                renderBuilder();
+            });
+            thresholdInput.addEventListener("input", renderBuilder);
+        }
+
+        if (addWaitButton) {
+            addWaitButton.addEventListener("click", () => handleBuilderToggle("wait"));
+        }
+        if (addReopenButton) {
+            addReopenButton.addEventListener("click", () => handleBuilderToggle("reopen"));
+        }
         if (permissionButton) {
             permissionButton.addEventListener("click", requestPermission);
         }
@@ -518,6 +727,7 @@
         initFoodFilters();
         initBudgetCalculator();
         initTrendChart();
+        initThresholdPlanner();
         bindCheckboxBoard("[data-checklist-board]", "[data-checklist-key]", "dlp-fan-guide-checklist", "[data-checklist-complete]");
         bindCheckboxBoard("[data-secret-board]", "[data-secret-key]", "dlp-fan-guide-secrets", "[data-secret-complete]");
         initRatings();

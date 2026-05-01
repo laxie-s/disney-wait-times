@@ -122,7 +122,7 @@ $view_mode = $_GET['view'] ?? 'all';
 $view_labels = [
     'all' => 'Tout voir',
     'open' => 'Ouvertes',
-    'closed' => 'Fermees / a verifier',
+    'closed' => 'Fermees / infos parc',
 ];
 
 if (!isset($view_labels[$view_mode])) {
@@ -170,6 +170,18 @@ if (($_GET['format'] ?? '') === 'json') {
         'items' => $alert_catalogue,
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+$alert_catalogue_by_park = [];
+foreach ($alert_catalogue as $item) {
+    $alert_catalogue_by_park[$item['park']][] = $item;
+}
+ksort($alert_catalogue_by_park);
+foreach ($alert_catalogue_by_park as $parkName => $items) {
+    usort($items, function ($left, $right) {
+        return strcmp($left['name'], $right['name']);
+    });
+    $alert_catalogue_by_park[$parkName] = $items;
 }
 
 if ($land_choisi !== null) {
@@ -239,9 +251,7 @@ foreach ($display_attractions as $item) {
     }
 }
 
-$watch_cards = array_values(array_filter($alert_catalogue, function ($item) {
-    return in_array($item['name'], ['Frozen Ever After', "Crush's Coaster", 'Avengers Assemble: Flight Force', 'Spider-Man W.E.B. Adventure', 'The Twilight Zone Tower of Terror', 'Orbitron'], true);
-}));
+$watch_cards = $alert_catalogue;
 
 usort($watch_cards, function ($left, $right) {
     $leftTypical = $left['typical_wait'] ?? 0;
@@ -283,7 +293,7 @@ renderHeader('wait-times', $site, $nav_items);
 <main class="page-main">
     <section class="shell page-hero compact-hero">
         <div class="section-head">
-            <p class="eyebrow"><?php echo $live_is_available ? 'Donnees live resort synchronisees' : 'Mode de secours'; ?></p>
+            <p class="eyebrow"><?php echo $live_is_available ? 'Donnees live resort synchronisees' : 'Lecture resort disponible'; ?></p>
             <h1><?php echo e($page_title); ?></h1>
             <p><?php echo e($page_description); ?></p>
         </div>
@@ -337,9 +347,19 @@ renderHeader('wait-times', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <div class="page-anchor-wrap">
+            <span class="meta-label">Sommaire de la page</span>
+            <nav class="chip-nav secondary page-anchor-nav" aria-label="Sommaire temps d attente">
+                <a href="#wait-alerts" class="chip-link">Alertes</a>
+                <a href="#wait-park-read" class="chip-link">Lecture par parc</a>
+                <a href="#wait-focus" class="chip-link">Priorites</a>
+                <a href="#wait-catalogue" class="chip-link">Catalogue live</a>
+            </nav>
+        </div>
     </section>
 
-    <section class="shell section-shell tight-top">
+    <section class="shell section-shell tight-top" id="wait-alerts">
         <div class="two-column-tools wait-tools-layout">
             <article class="tool-panel alert-panel" data-alert-board data-alert-endpoint="wait-times.php?format=json">
                 <div class="section-head compact-head">
@@ -353,15 +373,55 @@ renderHeader('wait-times', $site, $nav_items);
                     <span class="quiet-note">Les alertes tournent tant que cette page reste ouverte.</span>
                 </div>
 
+                <div class="alert-builder">
+                    <div class="alert-builder-grid">
+                        <label class="select-field">
+                            <span>Attraction a suivre</span>
+                            <select data-alert-select>
+                                <?php foreach ($alert_catalogue_by_park as $parkName => $items) : ?>
+                                    <optgroup label="<?php echo e($parkName); ?>">
+                                        <?php foreach ($items as $item) : ?>
+                                            <option value="<?php echo e($item['id']); ?>">
+                                                <?php echo e($item['name'] . ' - ' . $item['land']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+
+                        <label class="select-field">
+                            <span>Seuil perso en minutes</span>
+                            <input type="number" min="5" max="180" step="5" value="<?php echo !empty($alert_catalogue) ? e((string) $alert_catalogue[0]['target_wait']) : '15'; ?>" data-alert-threshold>
+                        </label>
+                    </div>
+
+                    <div class="alert-builder-note" data-alert-recommendation>
+                        Selectionne une attraction pour afficher la recommandation fan.
+                    </div>
+
+                    <div class="watch-actions">
+                        <button type="button" class="action-button" data-alert-add-wait>Ajouter une alerte attente</button>
+                        <button type="button" class="action-button" data-alert-add-reopen>Ajouter une alerte sortie de panne</button>
+                    </div>
+                </div>
+
+                <div class="section-head compact-head alert-shortcuts-head">
+                    <p class="eyebrow">Raccourcis conseilles</p>
+                    <h2>Les attractions qui meritent souvent une vraie veille dans une grosse journee.</h2>
+                    <p>Ces raccourcis restent la pour aller vite, mais tu peux maintenant choisir librement l attraction que tu veux suivre.</p>
+                </div>
+
                 <div class="alert-watch-grid">
                     <?php foreach ($watch_cards as $item) : ?>
                         <article class="mini-surface alert-watch-card">
                             <div class="card-row">
                                 <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
-                                <span class="pill soft-gold">Sous <?php echo e($item['target_wait']); ?> min</span>
+                                <span class="pill soft-gold">Reco <?php echo e($item['target_wait']); ?> min</span>
                             </div>
                             <h3><?php echo e($item['name']); ?></h3>
                             <p><?php echo e($item['story']); ?></p>
+                            <small class="quiet-note">Tres bon slot sous <?php echo e($item['great_wait']); ?> min. Lecture typique autour de <?php echo e($item['typical_wait'] ?? '--'); ?> min.</small>
                             <div class="watch-actions">
                                 <button type="button" class="action-button" data-watch-action="wait" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>" data-watch-threshold="<?php echo e($item['target_wait']); ?>">Alerte bon slot</button>
                                 <button type="button" class="action-button" data-watch-action="reopen" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>">Sortie de panne</button>
@@ -408,7 +468,7 @@ renderHeader('wait-times', $site, $nav_items);
         <script type="application/json" id="wait-alert-dataset"><?php echo json_encode($alert_dataset, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
     </section>
 
-    <section class="shell section-shell tight-top">
+    <section class="shell section-shell tight-top" id="wait-park-read">
         <div class="park-grid">
             <?php foreach ($park_profiles as $parkName => $profile) : ?>
                 <?php $summary = $park_summaries[$parkName]; ?>
@@ -419,14 +479,14 @@ renderHeader('wait-times', $site, $nav_items);
                     </div>
                     <h3><?php echo e($profile['headline']); ?></h3>
                     <p><?php echo e($profile['focus']); ?></p>
-                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne a confirmer'; ?></small>
+                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne non disponible'; ?></small>
                 </article>
             <?php endforeach; ?>
         </div>
     </section>
 
     <?php if (!empty($focus_cards)) : ?>
-        <section class="shell section-shell tight-top">
+        <section class="shell section-shell tight-top" id="wait-focus">
             <div class="section-head inline-head">
                 <div>
                     <p class="eyebrow">A traiter d abord</p>
@@ -451,7 +511,7 @@ renderHeader('wait-times', $site, $nav_items);
         </section>
     <?php endif; ?>
 
-    <section class="shell section-shell">
+    <section class="shell section-shell" id="wait-catalogue">
         <div class="section-head inline-head">
             <div>
                 <p class="eyebrow">Catalogue live</p>

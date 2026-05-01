@@ -26,6 +26,12 @@ $recharge_count = count($visible_practical_sections['Recharge'] ?? []);
 $shade_count = count($visible_practical_sections['Ombre et pluie'] ?? []);
 $water_count = count($visible_practical_sections['Fontaines a eau'] ?? []);
 
+$practical_descriptions = [
+    'Recharge' => 'Les spots ou poser le groupe quelques minutes sans casser le rythme de visite.',
+    'Ombre et pluie' => 'Les repaires a garder en tete quand le parc chauffe ou que la pluie tombe fort.',
+    'Fontaines a eau' => 'Des points simples a retrouver vite quand les familles tournent a la gourde.',
+];
+
 renderHead('Infos sur place', 'Recharge, ombre, pluie et fontaines sur les deux parcs.', $site);
 renderHeader('practical', $site, $nav_items);
 ?>
@@ -43,7 +49,7 @@ renderHeader('practical', $site, $nav_items);
             <article class="metric-card"><span><?php echo e($practical_count); ?></span><p>reperes fan de terrain</p></article>
             <article class="metric-card"><span><?php echo e($recharge_count); ?></span><p>points a tenter pour une recharge</p></article>
             <article class="metric-card"><span><?php echo e($shade_count); ?></span><p>zones de respiration en chaleur ou pluie</p></article>
-            <article class="metric-card"><span><?php echo e($water_count); ?></span><p>reperes a verifier pour les gourdes</p></article>
+            <article class="metric-card"><span><?php echo e($water_count); ?></span><p>reperes eau et gourdes</p></article>
         </div>
     </section>
 
@@ -56,6 +62,24 @@ renderHeader('practical', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <nav class="chip-nav secondary" aria-label="Navigation pratique">
+            <?php foreach ($visible_practical_sections as $title => $items) : ?>
+                <a href="#<?php echo e(normalizeName($title)); ?>" class="chip-link"><?php echo e($title); ?></a>
+            <?php endforeach; ?>
+        </nav>
+    </section>
+
+    <section class="shell section-shell tight-top">
+        <div class="feature-grid">
+            <?php foreach ($visible_practical_sections as $title => $items) : ?>
+                <article class="feature-card">
+                    <span class="pill soft-blue"><?php echo e(count($items)); ?> reperes</span>
+                    <h3><?php echo e($title); ?></h3>
+                    <p><?php echo e($practical_descriptions[$title] ?? 'Des reperes de terrain a retrouver vite.'); ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
     </section>
 
     <section class="shell section-shell tight-top">
@@ -69,7 +93,7 @@ renderHeader('practical', $site, $nav_items);
 
         <div class="practical-grid">
             <?php foreach ($visible_practical_sections as $title => $items) : ?>
-                <article class="practical-column">
+                <article class="practical-column" id="<?php echo e(normalizeName($title)); ?>">
                     <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($title); ?></span>
                         <span class="pill soft-gold"><?php echo e(count($items)); ?> reperes</span>

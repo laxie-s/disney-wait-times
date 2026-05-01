@@ -15,6 +15,14 @@ $visible_secret_sections = array_filter($secret_sections, function ($items, $lan
     return $park_choisi === null || $land_profiles[$landName]['park'] === $park_choisi;
 }, ARRAY_FILTER_USE_BOTH);
 
+$difficulty_counts = [];
+foreach ($visible_secret_tasks as $task) {
+    if (!isset($difficulty_counts[$task['difficulty']])) {
+        $difficulty_counts[$task['difficulty']] = 0;
+    }
+    $difficulty_counts[$task['difficulty']]++;
+}
+
 renderHead('Secrets', 'Details caches et defis fan sur les deux parcs.', $site);
 renderHeader('secrets', $site, $nav_items);
 ?>
@@ -46,9 +54,27 @@ renderHeader('secrets', $site, $nav_items);
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <nav class="chip-nav secondary" aria-label="Navigation secrets">
+            <a href="#secret-overview" class="chip-link">Vue rapide</a>
+            <a href="#secret-hunt" class="chip-link">Chasse</a>
+            <a href="#secret-zones" class="chip-link">Par land</a>
+        </nav>
     </section>
 
-    <section class="shell section-shell tight-top">
+    <section class="shell section-shell tight-top" id="secret-overview">
+        <div class="feature-grid">
+            <?php foreach ($difficulty_counts as $difficulty => $count) : ?>
+                <article class="feature-card">
+                    <span class="pill soft-gold"><?php echo e($count); ?> defis</span>
+                    <h3><?php echo e($difficulty); ?></h3>
+                    <p>Une facon simple de choisir si tu veux juste un clin d oeil iconique, du lore ou une vraie exploration de zone.</p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="shell section-shell" id="secret-hunt">
         <div class="section-head inline-head">
             <div>
                 <p class="eyebrow">Chasse aux tresors</p>
@@ -78,7 +104,7 @@ renderHeader('secrets', $site, $nav_items);
         </div>
     </section>
 
-    <section class="shell section-shell">
+    <section class="shell section-shell" id="secret-zones">
         <div class="secret-layout">
             <?php foreach ($visible_secret_sections as $landName => $items) : ?>
                 <article class="secret-group" id="<?php echo e(normalizeName($landName)); ?>">
