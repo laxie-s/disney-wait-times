@@ -272,7 +272,7 @@ foreach ($trend_candidates as $candidate) {
     $trendData = $hasHistory ? buildHistoryTrendSeries($profile) : buildHeuristicTrendSeries($waitTime, $candidate['name'], $current_hour);
 
     $trend_payload[] = [
-        'id' => normalizeName($candidate['name']),
+        'id' => attractionStorageKey($candidate['park'], $candidate['name']),
         'name' => $candidate['name'],
         'land' => $candidate['land'],
         'park' => $candidate['park'],
@@ -324,6 +324,10 @@ renderHeader('insights', $site, $nav_items);
                 La vraie difference ici, c est qu on ne regarde plus seulement le live du moment.
                 On garde une memoire heure par heure et un calendrier qui peut partir plus loin.
             </p>
+        </div>
+
+        <div class="section-visual-band">
+            <img src="<?php echo e(siteEditorialImage('stats')); ?>" alt="Carnet, plan de parc et lecture de courbe pour preparer sa visite">
         </div>
 
         <div class="metric-grid">
@@ -382,7 +386,10 @@ renderHeader('insights', $site, $nav_items);
                     continue;
                 } ?>
                 <?php $summary = $park_summaries[$parkName]; ?>
-                <article class="park-card">
+                <article class="park-card has-cover">
+                    <div class="card-cover card-cover-park">
+                        <img src="<?php echo e(parkEditorialImage($parkName)); ?>" alt="Visuel editorial du parc <?php echo e($parkName); ?>">
+                    </div>
                     <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($parkName); ?></span>
                         <span class="pill soft-green"><?php echo e($summary['open_count']); ?> ouvertes</span>
@@ -397,6 +404,9 @@ renderHeader('insights', $site, $nav_items);
 
     <section class="shell section-shell" id="insights-trends">
         <article class="tool-panel trend-panel" data-trend-app>
+            <div class="card-cover card-cover-wide">
+                <img src="<?php echo e(siteEditorialImage('stats')); ?>" alt="Vue editoriale d un plan de visite et d un suivi statistique">
+            </div>
             <div class="section-head compact-head">
                 <p class="eyebrow">Historique heure par heure</p>
                 <h2>La file monte ou se detend generalement a cette heure-ci ?</h2>
@@ -520,8 +530,10 @@ renderHeader('insights', $site, $nav_items);
                                 $signal_full = implode(' / ', $day['signals']);
                                 ?>
                                 <div class="calendar-day level-<?php echo e($day['level']); ?>" title="<?php echo e(trim($day['label'] . ($signal_full ? ' - ' . $signal_full : ''))); ?>">
-                                    <strong><?php echo e($day['day']); ?></strong>
-                                    <span><?php echo e($day['score']); ?></span>
+                                    <div class="calendar-day-head">
+                                        <strong><?php echo e($day['day']); ?></strong>
+                                        <span class="calendar-score"><?php echo e($day['score']); ?></span>
+                                    </div>
                                     <small><?php echo e(implode(' - ', $signal_labels)); ?></small>
                                 </div>
                             <?php endif; ?>

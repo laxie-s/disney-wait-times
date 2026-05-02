@@ -32,7 +32,10 @@ renderHeader('news', $site, $nav_items);
 ?>
 <main class="page-main">
     <section class="shell page-hero">
-        <article class="article-hero">
+        <article class="article-hero has-cover">
+            <div class="card-cover card-cover-wide">
+                <img src="<?php echo e(articleEditorialImage($article)); ?>" alt="Visuel editorial pour l article <?php echo e($article['title']); ?>">
+            </div>
             <div class="card-row">
                 <span class="pill soft-blue"><?php echo e($article['category']); ?></span>
                 <span class="pill soft-gold"><?php echo e($article['park']); ?></span>

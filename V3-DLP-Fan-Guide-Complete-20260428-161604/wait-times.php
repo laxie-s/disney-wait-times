@@ -298,17 +298,21 @@ renderHeader('wait-times', $site, $nav_items);
             <p><?php echo e($page_description); ?></p>
         </div>
 
+        <div class="section-visual-band">
+            <img src="<?php echo e($park_choisi === 'Disney Adventure World' ? parkEditorialImage('Disney Adventure World') : parkEditorialImage('Disneyland Park')); ?>" alt="Lecture editoriale des temps d attente">
+        </div>
+
         <div class="metric-grid">
             <article class="metric-card">
                 <span><?php echo $summary_open_count ?: '--'; ?></span>
                 <p>attractions avec un temps remonte</p>
             </article>
             <article class="metric-card">
-                <span><?php echo $summary_avg_wait !== null ? e($summary_avg_wait) . ' min' : '--'; ?></span>
-                <p>moyenne dans la vue actuelle</p>
+                <span><?php echo $summary_avg_wait !== null ? e((string) $summary_avg_wait) . ' min' : '--'; ?></span>
+                <p>moyenne dans cette vue</p>
             </article>
             <article class="metric-card">
-                <span><?php echo e($history_days ?: 0); ?></span>
+                <span><?php echo e((string) ($history_days ?: 0)); ?></span>
                 <p>jours d historique captures</p>
             </article>
             <article class="metric-card">
@@ -360,17 +364,17 @@ renderHeader('wait-times', $site, $nav_items);
     </section>
 
     <section class="shell section-shell tight-top" id="wait-alerts">
-        <div class="two-column-tools wait-tools-layout">
-            <article class="tool-panel alert-panel" data-alert-board data-alert-endpoint="wait-times.php?format=json">
+        <div class="two-column-tools">
+            <article class="tool-panel" data-alert-board data-alert-endpoint="wait-times.php?format=json">
                 <div class="section-head compact-head">
                     <p class="eyebrow">Alertes perso</p>
-                    <h2>Un seuil utile n est pas le meme pour Frozen, Crush ou Orbitron.</h2>
-                    <p>Tu peux garder des alertes sur une vraie fenetre de tir par attraction et aussi sur la sortie de panne.</p>
+                    <h2>Un bon seuil n est jamais le meme pour Frozen, Crush ou Orbitron.</h2>
+                    <p>Tu peux suivre une attraction precise, fixer ton seuil et garder une alerte sortie de panne sur les cartes les plus sensibles.</p>
                 </div>
 
                 <div class="card-actions">
                     <button type="button" class="btn btn-secondary" data-alert-permission>Activer les notifications</button>
-                    <span class="quiet-note">Les alertes tournent tant que cette page reste ouverte.</span>
+                    <span class="quiet-note">Les alertes restent actives tant que cette page est ouverte.</span>
                 </div>
 
                 <div class="alert-builder">
@@ -402,50 +406,50 @@ renderHeader('wait-times', $site, $nav_items);
 
                     <div class="watch-actions">
                         <button type="button" class="action-button" data-alert-add-wait>Ajouter une alerte attente</button>
-                        <button type="button" class="action-button" data-alert-add-reopen>Ajouter une alerte sortie de panne</button>
+                        <button type="button" class="action-button subtle" data-alert-add-reopen>Ajouter une alerte sortie de panne</button>
                     </div>
                 </div>
 
-                <div class="section-head compact-head alert-shortcuts-head">
+                <div class="section-head compact-head">
                     <p class="eyebrow">Raccourcis conseilles</p>
-                    <h2>Les attractions qui meritent souvent une vraie veille dans une grosse journee.</h2>
-                    <p>Ces raccourcis restent la pour aller vite, mais tu peux maintenant choisir librement l attraction que tu veux suivre.</p>
+                    <h2>Les cartes qui meritent souvent une vraie veille.</h2>
+                    <p>Ces raccourcis sont la pour aller vite, mais tu gardes maintenant le choix complet sur toutes les attractions suivies.</p>
                 </div>
 
-                <div class="alert-watch-grid">
+                <div class="stack-grid">
                     <?php foreach ($watch_cards as $item) : ?>
-                        <article class="mini-surface alert-watch-card">
+                        <article class="mini-surface">
                             <div class="card-row">
                                 <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
-                                <span class="pill soft-gold">Reco <?php echo e($item['target_wait']); ?> min</span>
+                                <span class="pill soft-gold">Reco <?php echo e((string) $item['target_wait']); ?> min</span>
                             </div>
                             <h3><?php echo e($item['name']); ?></h3>
                             <p><?php echo e($item['story']); ?></p>
-                            <small class="quiet-note">Tres bon slot sous <?php echo e($item['great_wait']); ?> min. Lecture typique autour de <?php echo e($item['typical_wait'] ?? '--'); ?> min.</small>
+                            <small class="quiet-note">Tres bon slot sous <?php echo e((string) $item['great_wait']); ?> min. Lecture typique autour de <?php echo e((string) ($item['typical_wait'] ?? '--')); ?> min.</small>
                             <div class="watch-actions">
-                                <button type="button" class="action-button" data-watch-action="wait" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>" data-watch-threshold="<?php echo e($item['target_wait']); ?>">Alerte bon slot</button>
-                                <button type="button" class="action-button" data-watch-action="reopen" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>">Sortie de panne</button>
+                                <button type="button" class="action-button" data-watch-action="wait" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>" data-watch-threshold="<?php echo e((string) $item['target_wait']); ?>">Alerte bon slot</button>
+                                <button type="button" class="action-button subtle" data-watch-action="reopen" data-watch-id="<?php echo e($item['id']); ?>" data-watch-name="<?php echo e($item['name']); ?>">Sortie de panne</button>
                             </div>
                         </article>
                     <?php endforeach; ?>
                 </div>
 
                 <div class="alert-live-list" data-alert-live-list>
-                    <div class="empty-inline">Aucune alerte encore active sur cet appareil.</div>
+                    <div class="empty-inline">Aucune alerte active sur cet appareil pour le moment.</div>
                 </div>
             </article>
 
             <article class="tool-panel">
                 <div class="section-head compact-head">
                     <p class="eyebrow">Lecture rapide</p>
-                    <h2>Ce que la page sait raconter meme quand le live n est pas parfait.</h2>
+                    <h2>Ce que la page raconte meme quand le flux n est pas parfait.</h2>
                 </div>
 
                 <div class="stack-grid">
                     <article class="mini-surface">
-                        <span class="pill soft-green"><?php echo e($summary_closed_count + $summary_untracked_count); ?> cartes</span>
+                        <span class="pill soft-green"><?php echo e((string) ($summary_closed_count + $summary_untracked_count)); ?> cartes</span>
                         <h3>Fermetures et flux incomplets</h3>
-                        <p>Une attraction sans temps ne disparait plus dans la masse. La page garde un contexte et peut la suivre jusqu a la reouverture.</p>
+                        <p>Une attraction sans temps ne disparait plus. La page garde son contexte, son statut et ses alertes possibles.</p>
                     </article>
 
                     <?php if ($orbitron_info) : ?>
@@ -453,14 +457,14 @@ renderHeader('wait-times', $site, $nav_items);
                             <span class="pill soft-blue">Focus Orbitron</span>
                             <h3><?php echo e($orbitron_info['name']); ?></h3>
                             <p><?php echo e($orbitron_info['story']); ?></p>
-                            <small class="quiet-note">Seuil fan: <?php echo e($orbitron_info['target_wait']); ?> min.</small>
+                            <small class="quiet-note">Seuil fan conseille: <?php echo e((string) $orbitron_info['target_wait']); ?> min.</small>
                         </article>
                     <?php endif; ?>
 
                     <article class="mini-surface">
-                        <span class="pill soft-gold"><?php echo e($history_days ?: 0); ?> jours</span>
+                        <span class="pill soft-gold"><?php echo e((string) ($history_days ?: 0)); ?> jours</span>
                         <h3>Historique heure par heure</h3>
-                        <p>La logique d attente se construit au fil des visites et des rafraichissements. Plus tu accumules de jours, plus les seuils deviennent utiles.</p>
+                        <p>Plus les captures s accumulent, plus les seuils et recommandations deviennent utiles dans une grosse journee.</p>
                     </article>
                 </div>
             </article>
@@ -469,17 +473,22 @@ renderHeader('wait-times', $site, $nav_items);
     </section>
 
     <section class="shell section-shell tight-top" id="wait-park-read">
+        <div class="section-head compact-head">
+            <p class="eyebrow">Lecture par parc</p>
+            <h2>Le meme resort, mais pas la meme logique de visite.</h2>
+        </div>
+
         <div class="park-grid">
             <?php foreach ($park_profiles as $parkName => $profile) : ?>
                 <?php $summary = $park_summaries[$parkName]; ?>
                 <article class="park-card">
                     <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($parkName); ?></span>
-                        <span class="pill soft-green"><?php echo e($summary['open_count']); ?> ouvertes</span>
+                        <span class="pill soft-green"><?php echo e((string) $summary['open_count']); ?> ouvertes</span>
                     </div>
                     <h3><?php echo e($profile['headline']); ?></h3>
                     <p><?php echo e($profile['focus']); ?></p>
-                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne non disponible'; ?></small>
+                    <small class="quiet-note"><?php echo $summary['avg_wait'] !== null ? e((string) $summary['avg_wait']) . ' min de moyenne live' : 'Moyenne live non disponible'; ?></small>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -487,24 +496,22 @@ renderHeader('wait-times', $site, $nav_items);
 
     <?php if (!empty($focus_cards)) : ?>
         <section class="shell section-shell tight-top" id="wait-focus">
-            <div class="section-head inline-head">
-                <div>
-                    <p class="eyebrow">A traiter d abord</p>
-                    <h2>Les cartes qui valent le plus le coup maintenant.</h2>
-                </div>
+            <div class="section-head compact-head">
+                <p class="eyebrow">A traiter d abord</p>
+                <h2>Les meilleures fenetres du moment dans cette vue.</h2>
             </div>
 
-            <div class="opportunity-grid">
+            <div class="park-grid">
                 <?php foreach ($focus_cards as $item) : ?>
                     <?php $profile = waitProfileForItem($item, $wait_history_profiles, $wait_alert_profiles); ?>
-                    <article class="opportunity-card">
+                    <article class="park-card">
                         <div class="card-row">
-                            <span class="pill soft-green"><?php echo e($item['wait_time']); ?> min</span>
+                            <span class="pill soft-green"><?php echo e((string) $item['wait_time']); ?> min</span>
                             <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
                         </div>
                         <h3><?php echo e($item['name']); ?></h3>
                         <p><?php echo e(waitStoryCopy($item, $profile, $current_hour)); ?></p>
-                        <small><?php echo e(waitInfoLine($item, $profile, $current_hour)); ?></small>
+                        <small class="quiet-note"><?php echo e(waitInfoLine($item, $profile, $current_hour)); ?></small>
                     </article>
                 <?php endforeach; ?>
             </div>
@@ -515,7 +522,7 @@ renderHeader('wait-times', $site, $nav_items);
         <div class="section-head inline-head">
             <div>
                 <p class="eyebrow">Catalogue live</p>
-                <h2>Les attractions dans cette vue.</h2>
+                <h2>Les attractions visibles dans cette vue.</h2>
             </div>
             <span class="quiet-note"><?php echo e($sync_full_label); ?></span>
         </div>
@@ -525,13 +532,14 @@ renderHeader('wait-times', $site, $nav_items);
                 <?php foreach ($display_attractions as $item) : ?>
                     <?php
                     $profile = waitProfileForItem($item, $wait_history_profiles, $wait_alert_profiles);
-                    $hourly = hourlyProfileForNow($profile, $current_hour);
                     $id = attractionStorageKey($item['park'], $item['name']);
                     ?>
                     <article class="attraction-card status-<?php echo e($item['status']); ?>">
                         <div class="card-row">
-                            <span class="land-mark small"><?php echo e(initials($item['name'])); ?></span>
                             <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
+                            <span class="pill <?php echo $item['status'] === 'open' ? 'soft-green' : ($item['status'] === 'closed' ? 'soft-rose' : 'soft-gold'); ?>">
+                                <?php echo e(statusLabel($item['status'])); ?>
+                            </span>
                         </div>
 
                         <div class="attraction-top">
@@ -541,27 +549,21 @@ renderHeader('wait-times', $site, $nav_items);
                             </div>
 
                             <div class="wait-box">
-                                <strong><?php echo $item['status'] === 'open' ? e($item['wait_time']) : '--'; ?></strong>
+                                <strong><?php echo $item['status'] === 'open' && is_numeric($item['wait_time']) ? e((string) $item['wait_time']) : '--'; ?></strong>
                                 <span><?php echo e(waitUnitLabel($item['status'])); ?></span>
                             </div>
                         </div>
 
-                        <div class="attraction-meta">
-                            <span class="status-pill <?php echo $item['status'] === 'open' ? 'live' : 'offline'; ?>"><?php echo e(statusLabel($item['status'])); ?></span>
-                            <span class="wait-note"><?php echo e(waitInfoLine($item, $profile, $current_hour)); ?></span>
-                        </div>
-
                         <p class="card-note"><?php echo e(waitStoryCopy($item, $profile, $current_hour)); ?></p>
+                        <small class="quiet-note"><?php echo e(waitInfoLine($item, $profile, $current_hour)); ?></small>
 
-                        <div class="watch-actions">
-                            <button type="button" class="action-button" data-watch-action="wait" data-watch-id="<?php echo e($id); ?>" data-watch-name="<?php echo e($item['name']); ?>" data-watch-threshold="<?php echo e($profile['target_wait']); ?>">Sous <?php echo e($profile['target_wait']); ?> min</button>
-                            <button type="button" class="action-button" data-watch-action="reopen" data-watch-id="<?php echo e($id); ?>" data-watch-name="<?php echo e($item['name']); ?>">Sortie de panne</button>
+                        <div class="watch-actions watch-actions--spaced">
+                            <button type="button" class="action-button" data-watch-action="wait" data-watch-id="<?php echo e($id); ?>" data-watch-name="<?php echo e($item['name']); ?>" data-watch-threshold="<?php echo e((string) $profile['target_wait']); ?>">Sous <?php echo e((string) $profile['target_wait']); ?> min</button>
+                            <button type="button" class="action-button subtle" data-watch-action="reopen" data-watch-id="<?php echo e($id); ?>" data-watch-name="<?php echo e($item['name']); ?>">Sortie de panne</button>
                         </div>
 
                         <div class="attraction-foot">
-                            <span class="pill <?php echo $item['status'] === 'open' ? 'soft-green' : ($item['status'] === 'closed' ? 'soft-rose' : 'soft-gold'); ?>">
-                                <?php echo e($item['land']); ?>
-                            </span>
+                            <span class="pill soft-blue"><?php echo e($item['land']); ?></span>
                             <small><?php echo e($item['tip']); ?></small>
                         </div>
                     </article>

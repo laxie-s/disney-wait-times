@@ -55,6 +55,66 @@ function initials($value)
     return strtoupper(substr((string) $value, 0, 2));
 }
 
+function siteEditorialImage($key)
+{
+    $images = [
+        'disneyland-park' => 'assets/images/park-disneyland-editorial.png',
+        'adventure-world' => 'assets/images/park-adventure-world-evening.png',
+        'food' => 'assets/images/food-editorial-table.png',
+        'stats' => 'assets/images/stats-planning-desk.png',
+    ];
+
+    return $images[$key] ?? $images['stats'];
+}
+
+function parkEditorialImage($park)
+{
+    if ($park === 'Disney Adventure World') {
+        return siteEditorialImage('adventure-world');
+    }
+
+    return siteEditorialImage('disneyland-park');
+}
+
+function featureEditorialImage($tag)
+{
+    $tag = normalizeName($tag);
+
+    if ($tag === 'food') {
+        return siteEditorialImage('food');
+    }
+
+    if ($tag === 'stats' || $tag === 'deuxparcs' || $tag === 'pratique') {
+        return siteEditorialImage('stats');
+    }
+
+    if ($tag === 'watch') {
+        return siteEditorialImage('adventure-world');
+    }
+
+    return siteEditorialImage('disneyland-park');
+}
+
+function articleEditorialImage($article)
+{
+    $category = normalizeName($article['category'] ?? '');
+    $park = $article['park'] ?? 'Resort';
+
+    if (in_array($category, ['food', 'restauration'], true)) {
+        return siteEditorialImage('food');
+    }
+
+    if ($park === 'Disney Adventure World') {
+        return siteEditorialImage('adventure-world');
+    }
+
+    if ($park === 'Disneyland Park') {
+        return siteEditorialImage('disneyland-park');
+    }
+
+    return siteEditorialImage('stats');
+}
+
 function totalAttractions($lands)
 {
     $total = 0;
@@ -701,6 +761,22 @@ $show_reference = [
         'soft_times' => ['12:45', '15:30', '18:00'],
         'source_label' => 'Disneyland Paris officiel',
         'source_url' => 'https://www.disneylandparis.com/en-int/entertainment/disney-adventure-world/animation-celebration-frozen-a-musical-invitation',
+    ],
+    [
+        'id' => 'disney-cascade-of-lights',
+        'name' => 'Disney Cascade of Lights',
+        'park' => 'Disney Adventure World',
+        'kind' => 'Nocturne',
+        'location' => 'Adventure Bay / Adventure Way',
+        'duration' => 20,
+        'booking' => 'Acces libre sur zone',
+        'target_days' => 'Tous les soirs selon calendrier officiel',
+        'times' => [],
+        'busy_times' => [],
+        'soft_times' => [],
+        'schedule_note' => 'Horaire du jour a verifier dans l app ou le programme officiel du parc.',
+        'source_label' => 'Disneyland Paris officiel',
+        'source_url' => 'https://www.disneylandparis.com/en-int/entertainment/disney-adventure-world/disney-cascade-of-lights/',
     ],
 ];
 

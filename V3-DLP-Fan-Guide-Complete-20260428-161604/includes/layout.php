@@ -1,5 +1,5 @@
 <?php
-function renderHead($title, $description, $site)
+function renderHead($title, $description, $site, array $extraStyles = [])
 {
     ?>
 <!DOCTYPE html>
@@ -10,6 +10,9 @@ function renderHead($title, $description, $site)
     <title><?php echo e($title); ?> - <?php echo e($site['name']); ?></title>
     <meta name="description" content="<?php echo e($description ?: $site['meta_description']); ?>">
     <link rel="stylesheet" href="assets/css/style.css">
+    <?php foreach ($extraStyles as $href) : ?>
+        <link rel="stylesheet" href="<?php echo e($href); ?>">
+    <?php endforeach; ?>
 </head>
 <?php
 }
@@ -39,53 +42,54 @@ function renderHeader($currentPage, $site, $navItems)
     }
 
     $currentSubnav = [];
+    $currentGroupLabel = 'Accueil';
     foreach ($navGroups as $group) {
         if ($group['id'] === $currentGroup) {
             $currentSubnav = $group['items'];
+            $currentGroupLabel = $group['label'];
             break;
         }
     }
 
     ?>
 <body data-page="<?php echo e($currentPage); ?>">
-<div class="notice-bar">
-    <?php echo e($site['legal_notice']); ?>
-</div>
-
 <header id="main-header">
     <div class="shell header-shell">
-        <a class="brand" href="index.php" aria-label="<?php echo e($site['name']); ?>">
-            <span class="brand-mark">DG</span>
-            <span class="brand-copy">
-                <strong><?php echo e($site['name']); ?></strong>
-                <small>Guide fan independant</small>
-            </span>
-        </a>
+        <div class="header-top-row">
+            <a class="brand brand-centered" href="index.php" aria-label="<?php echo e($site['name']); ?>">
+                <span class="brand-copy brand-copy-centered">
+                    <strong><?php echo e($site['name']); ?></strong>
+                    <small>Disneyland Paris, lu avec un regard fan, clair et utile</small>
+                </span>
+            </a>
+        </div>
 
-        <nav class="main-nav" aria-label="Navigation principale">
-            <ul class="nav-groups">
-                <?php foreach ($navGroups as $group) : ?>
-                    <?php
-                    $firstItemId = $group['items'][0];
-                    $firstItem = $navLookup[$firstItemId] ?? null;
-                    if (!$firstItem) {
-                        continue;
-                    }
-                    ?>
-                    <li>
-                        <a href="<?php echo e($firstItem['href']); ?>" class="nav-group-link <?php echo $currentGroup === $group['id'] ? 'is-active' : ''; ?>">
-                            <?php echo e($group['label']); ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </nav>
+        <div class="header-nav-row">
+            <nav class="main-nav" aria-label="Navigation principale">
+                <ul class="nav-groups">
+                    <?php foreach ($navGroups as $group) : ?>
+                        <?php
+                        $firstItemId = $group['items'][0];
+                        $firstItem = $navLookup[$firstItemId] ?? null;
+                        if (!$firstItem) {
+                            continue;
+                        }
+                        ?>
+                        <li>
+                            <a href="<?php echo e($firstItem['href']); ?>" class="nav-group-link <?php echo $currentGroup === $group['id'] ? 'is-active' : ''; ?>">
+                                <?php echo e($group['label']); ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </nav>
+        </div>
     </div>
 </header>
 <?php if (count($currentSubnav) > 1) : ?>
     <div class="subnav-bar">
         <div class="shell subnav-shell">
-            <span class="subnav-label"><?php echo e($currentGroup === 'explore' ? 'Explorer' : ($currentGroup === 'practical' ? 'Pratique' : 'Visite')); ?></span>
+            <span class="subnav-label"><?php echo e($currentGroupLabel); ?></span>
             <nav class="subnav-links" aria-label="Sous-navigation">
                 <?php foreach ($currentSubnav as $itemId) : ?>
                     <?php if (!isset($navLookup[$itemId])) {
@@ -102,7 +106,7 @@ function renderHeader($currentPage, $site, $navItems)
 <?php
 }
 
-function renderFooter($site, $footerLinks)
+function renderFooter($site, $footerLinks, array $extraScripts = [])
 {
     ?>
 <footer class="site-footer">
@@ -120,6 +124,10 @@ function renderFooter($site, $footerLinks)
     </div>
 </footer>
 <script src="assets/js/app.js" defer></script>
+<script src="assets/js/layout.js" defer></script>
+<?php foreach ($extraScripts as $src) : ?>
+    <script src="<?php echo e($src); ?>" defer></script>
+<?php endforeach; ?>
 </body>
 </html>
 <?php

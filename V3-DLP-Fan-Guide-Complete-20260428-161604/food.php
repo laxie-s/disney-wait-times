@@ -156,6 +156,10 @@ renderHeader('food', $site, $nav_items);
             </p>
         </div>
 
+        <div class="section-visual-band">
+            <img src="<?php echo e(siteEditorialImage('food')); ?>" alt="Table editoriale avec vue sur le parc et assiettes de restauration">
+        </div>
+
         <div class="metric-grid food-metric-grid">
             <article class="metric-card">
                 <span><?php echo e(count($display_spots)); ?></span>
@@ -204,7 +208,10 @@ renderHeader('food', $site, $nav_items);
                 <?php if ($park_choisi !== null && $parkName !== $park_choisi) {
                     continue;
                 } ?>
-                <article class="park-card">
+                <article class="park-card has-cover">
+                    <div class="card-cover card-cover-park">
+                        <img src="<?php echo e(parkEditorialImage($parkName)); ?>" alt="Visuel editorial du parc <?php echo e($parkName); ?>">
+                    </div>
                     <div class="card-row">
                         <span class="pill soft-blue"><?php echo e($parkName); ?></span>
                         <span class="pill soft-gold"><?php echo e($park_restaurant_counts[$parkName]); ?> restos</span>
@@ -411,7 +418,10 @@ renderHeader('food', $site, $nav_items);
                 </div>
             </article>
 
-            <article class="tool-panel" data-budget-calculator data-quick-adult="<?php echo e($meal_budget_defaults['quick_adult']); ?>" data-quick-kid="<?php echo e($meal_budget_defaults['quick_kid']); ?>" data-table-adult="<?php echo e($meal_budget_defaults['table_adult']); ?>" data-table-kid="<?php echo e($meal_budget_defaults['table_kid']); ?>" data-signature-adult="<?php echo e($meal_budget_defaults['signature_adult']); ?>" data-signature-kid="<?php echo e($meal_budget_defaults['signature_kid']); ?>" data-snack-price="<?php echo e($meal_budget_defaults['snack']); ?>">
+            <article class="tool-panel has-cover" data-budget-calculator data-quick-adult="<?php echo e($meal_budget_defaults['quick_adult']); ?>" data-quick-kid="<?php echo e($meal_budget_defaults['quick_kid']); ?>" data-table-adult="<?php echo e($meal_budget_defaults['table_adult']); ?>" data-table-kid="<?php echo e($meal_budget_defaults['table_kid']); ?>" data-signature-adult="<?php echo e($meal_budget_defaults['signature_adult']); ?>" data-signature-kid="<?php echo e($meal_budget_defaults['signature_kid']); ?>" data-snack-price="<?php echo e($meal_budget_defaults['snack']); ?>">
+                <div class="card-cover card-cover-wide">
+                    <img src="<?php echo e(siteEditorialImage('food')); ?>" alt="Visuel editorial pour la rubrique budget et restauration">
+                </div>
                 <div class="section-head compact-head">
                     <p class="eyebrow">Simulateur budget repas</p>
                     <h2>Une estimation simple avant de partir.</h2>

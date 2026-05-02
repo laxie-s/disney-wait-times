@@ -84,6 +84,10 @@ renderHeader('shows', $site, $nav_items);
             </p>
         </div>
 
+        <div class="section-visual-band">
+            <img src="<?php echo e($park_choisi === 'Disney Adventure World' ? parkEditorialImage('Disney Adventure World') : parkEditorialImage('Disneyland Park')); ?>" alt="Ambiance editoriale du parc pour la lecture du programme des shows">
+        </div>
+
         <div class="metric-grid">
             <article class="metric-card">
                 <span><?php echo e(count($visible_shows)); ?></span>
@@ -196,29 +200,36 @@ renderHeader('shows', $site, $nav_items);
                     </div>
 
                     <div class="show-session-grid">
-                        <?php foreach ($show['times'] as $time) : ?>
-                            <?php
-                            $minutes = clockToMinutes($time);
-                            if ($minutes === null) {
-                                continue;
-                            }
-                            $distance = abs($minutes - $focus_minutes);
-                            ?>
-                            <button
-                                type="button"
-                                class="show-slot<?php echo $distance <= 20 ? ' is-near' : ''; ?>"
-                                data-show-slot
-                                data-show-time="<?php echo e($time); ?>"
-                                data-show-name="<?php echo e($show['name']); ?>"
-                                data-show-park="<?php echo e($show['park']); ?>"
-                                data-show-location="<?php echo e($show['location']); ?>"
-                                data-show-kind="<?php echo e($show['kind']); ?>"
-                                data-show-booking="<?php echo e($show['booking']); ?>"
-                            >
-                                <strong><?php echo e($time); ?></strong>
-                                <span><?php echo e($show['kind']); ?></span>
-                            </button>
-                        <?php endforeach; ?>
+                        <?php if (!empty($show['times'])) : ?>
+                            <?php foreach ($show['times'] as $time) : ?>
+                                <?php
+                                $minutes = clockToMinutes($time);
+                                if ($minutes === null) {
+                                    continue;
+                                }
+                                $distance = abs($minutes - $focus_minutes);
+                                ?>
+                                <button
+                                    type="button"
+                                    class="show-slot<?php echo $distance <= 20 ? ' is-near' : ''; ?>"
+                                    data-show-slot
+                                    data-show-time="<?php echo e($time); ?>"
+                                    data-show-name="<?php echo e($show['name']); ?>"
+                                    data-show-park="<?php echo e($show['park']); ?>"
+                                    data-show-location="<?php echo e($show['location']); ?>"
+                                    data-show-kind="<?php echo e($show['kind']); ?>"
+                                    data-show-booking="<?php echo e($show['booking']); ?>"
+                                >
+                                    <strong><?php echo e($time); ?></strong>
+                                    <span><?php echo e($show['kind']); ?></span>
+                                </button>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <div class="show-slot show-slot-placeholder">
+                                <strong>Horaire variable</strong>
+                                <span><?php echo e($show['schedule_note'] ?? 'Programme du jour a confirmer.'); ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </article>
             <?php endforeach; ?>

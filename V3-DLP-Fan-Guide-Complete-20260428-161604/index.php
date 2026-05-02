@@ -2,99 +2,265 @@
 include 'includes/data.php';
 include 'includes/layout.php';
 
-$featuredArticle = $news_articles[0];
-$secondaryArticles = array_slice($news_articles, 1, 2);
-$adventure_world_food = array_values(array_filter($dining_spots, function ($spot) {
-    return $spot['park'] === 'Disney Adventure World';
-}));
-$adventure_world_picks = array_values(array_filter($top_picks, function ($item) {
-    return $item['park'] === 'Disney Adventure World';
-}));
+function homeFindAttraction($name, $catalogue)
+{
+    foreach ($catalogue as $item) {
+        if (($item['name'] ?? '') === $name) {
+            return $item;
+        }
+    }
 
-renderHead('Accueil', $site['meta_description'], $site);
+    return null;
+}
+
+function homeFindDiningSpot($id, $spots)
+{
+    foreach ($spots as $spot) {
+        if (($spot['id'] ?? '') === $id) {
+            return $spot;
+        }
+    }
+
+    return null;
+}
+
+function homeBuildShowCards($shows)
+{
+    $now = new DateTime('now', new DateTimeZone('Europe/Paris'));
+    $nowMinutes = ((int) $now->format('H') * 60) + (int) $now->format('i');
+    $cards = [];
+
+    foreach ($shows as $show) {
+        if (!empty($show['times'])) {
+            foreach ($show['times'] as $time) {
+                if (!preg_match('/^(\d{2}):(\d{2})$/', $time, $matches)) {
+                    continue;
+                }
+
+                $minutes = ((int) $matches[1] * 60) + (int) $matches[2];
+                $delta = $minutes - $nowMinutes;
+                if ($delta < 0) {
+                    $delta += 24 * 60;
+                }
+
+                $cards[] = [
+                    'id' => $show['id'] . '-' . $time,
+                    'name' => $show['name'],
+                    'park' => $show['park'],
+                    'kind' => $show['kind'],
+                    'time_label' => $time,
+                    'location' => $show['location'],
+                    'delta' => $delta,
+                ];
+            }
+            continue;
+        }
+
+        $cards[] = [
+            'id' => $show['id'] . '-note',
+            'name' => $show['name'],
+            'park' => $show['park'],
+            'kind' => $show['kind'],
+            'time_label' => 'Horaire a verifier',
+            'location' => $show['location'],
+            'delta' => 9999,
+        ];
+    }
+
+    usort($cards, function ($left, $right) {
+        if ($left['delta'] === $right['delta']) {
+            return strcmp($left['name'], $right['name']);
+        }
+
+        return $left['delta'] <=> $right['delta'];
+    });
+
+    return array_slice($cards, 0, 4);
+}
+
+$featuredArticle = $news_articles[0] ?? null;
+$homeHeroVisual = siteEditorialImage('adventure-world');
+
+$waitNames = [
+    'Frozen Ever After',
+    "Crush's Coaster",
+    'Big Thunder Mountain',
+    'Spider-Man W.E.B. Adventure',
+];
+
+$waitSpotlights = [];
+foreach ($waitNames as $name) {
+    $found = homeFindAttraction($name, $flat_catalogue);
+    if ($found) {
+        $waitSpotlights[] = $found;
+    }
+}
+
+$foodIds = ['regal-view', 'captain-jacks', 'pym-kitchen', 'hakuna-matata'];
+$foodSpotlights = [];
+foreach ($foodIds as $id) {
+    $found = homeFindDiningSpot($id, $dining_spots);
+    if ($found) {
+        $foodSpotlights[] = $found;
+    }
+}
+
+$showSpotlights = homeBuildShowCards($show_reference);
+$newsSpotlights = array_slice($news_articles, 0, 4);
+$parkCards = [];
+
+foreach ($park_profiles as $parkName => $profile) {
+    $parkCards[] = [
+        'name' => $parkName,
+        'headline' => $profile['headline'],
+        'focus' => $profile['focus'],
+        'open_count' => $park_summaries[$parkName]['open_count'] ?? 0,
+        'avg_wait' => $park_summaries[$parkName]['avg_wait'] ?? null,
+    ];
+}
+
+renderHead('Accueil', $site['meta_description'], $site, ['assets/css/pages/home.css']);
 renderHeader('home', $site, $nav_items);
 ?>
 <main class="page-main">
-    <section class="hero-band">
-        <div class="shell hero-shell">
-            <div class="hero-copy">
-                <p class="eyebrow">Deux parcs, live, food, stats et secrets</p>
-                <h1>Le guide fan qui aide a lire Disneyland Paris sur Disneyland Park et Disney Adventure World.</h1>
-                <p class="lead">
-                    Une base claire pour suivre les temps d attente, comprendre la logique de chaque parc,
-                    mieux choisir ses pauses repas et garder une vraie lecture fan a l echelle de tout le resort.
-                </p>
+    <section class="home-hero">
+        <div class="shell home-hero-shell">
+            <div class="home-hero-stage">
+                <img src="<?php echo e($homeHeroVisual); ?>" alt="Vue editoriale de Disney Adventure World">
+                <div class="home-hero-overlay"></div>
 
-                <div class="hero-actions">
-                    <a class="btn btn-primary" href="wait-times.php">Ouvrir le tableau live</a>
-                    <a class="btn btn-secondary" href="planner.php">Preparer sa visite</a>
+                <div class="home-hero-copy">
+                    <span class="eyebrow">Deux parcs, live, food, stats et secrets</span>
+                    <h1>Le guide fan qui aide a lire Disneyland Paris avec plus de style et plus de clarte.</h1>
+                    <p class="lead">
+                        Une lecture resort pensee comme une vraie destination :
+                        plus de reperes, des choix plus rapides et une vue plus lisible sur Disneyland Park
+                        et Disney Adventure World.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="wait-times.php">Ouvrir le live</a>
+                        <a class="btn btn-secondary" href="planner.php">Preparer sa visite</a>
+                    </div>
+                    <div class="tag-row hero-tag-row">
+                        <span>Guide fan independant</span>
+                        <span>Deux parcs</span>
+                        <span>Lecture terrain</span>
+                        <span>Actus resort</span>
+                    </div>
                 </div>
 
-                <div class="tag-row">
-                    <span>Disneyland Park</span>
-                    <span>Disney Adventure World</span>
-                    <span>Guide fan clair</span>
-                    <span>Pense pour le terrain</span>
-                </div>
+                <aside class="home-hero-aside">
+                    <span class="pill soft-gold">Focus du moment</span>
+                    <h2><?php echo e($best_park_name ?: 'Disney Adventure World'); ?></h2>
+                    <p>
+                        <?php if ($best_pick) : ?>
+                            <?php echo e($best_pick['name']); ?> reste l une des meilleures lectures du moment avec
+                            <?php echo e((string) $best_pick['wait_time']); ?> min.
+                        <?php else : ?>
+                            Meme quand le flux live ralentit, le site garde sa lecture pratique, editoriale et fan.
+                        <?php endif; ?>
+                    </p>
+                    <div class="hero-inline-stats">
+                        <article>
+                            <strong><?php echo e((string) $open_count); ?></strong>
+                            <small>attractions ouvertes</small>
+                        </article>
+                        <article>
+                            <strong><?php echo $avg_wait !== null ? e((string) $avg_wait) . ' min' : '--'; ?></strong>
+                            <small>moyenne resort</small>
+                        </article>
+                    </div>
+                </aside>
             </div>
 
-            <div class="hero-visual">
-                <img src="assets/images/hero-dual-park.png" alt="Illustration fan de deux univers de parc a theme">
+            <section class="hero-dock" data-home-dock>
+                <div class="hero-dock-tabs" role="tablist" aria-label="Apercu accueil">
+                    <button type="button" class="hero-dock-tab is-active" data-home-tab="waits" aria-selected="true">Temps d attente</button>
+                    <button type="button" class="hero-dock-tab" data-home-tab="food" aria-selected="false">Restauration</button>
+                    <button type="button" class="hero-dock-tab" data-home-tab="shows" aria-selected="false">Programme shows</button>
+                    <button type="button" class="hero-dock-tab" data-home-tab="news" aria-selected="false">Actus</button>
+                </div>
 
-                <div class="glass-panel">
-                    <div class="panel-top">
-                        <div>
-                            <span class="meta-label">Etat du site</span>
-                            <strong><?php echo $live_is_available ? 'Flux live resort actif' : 'Lecture resort disponible'; ?></strong>
+                <div class="hero-dock-panels">
+                    <div class="hero-dock-panel" data-home-panel="waits">
+                        <div class="hero-dock-grid hero-dock-grid-rich">
+                            <?php foreach ($waitSpotlights as $item) : ?>
+                                <a class="hero-dock-card hero-dock-card-rich" href="wait-times.php">
+                                    <img src="<?php echo e(parkEditorialImage($item['park'])); ?>" alt="<?php echo e($item['park']); ?>">
+                                    <div>
+                                        <span class="meta-label"><?php echo e($item['park']); ?></span>
+                                        <strong><?php echo e($item['name']); ?></strong>
+                                        <small>
+                                            <?php echo e($item['land']); ?> -
+                                            <?php echo $item['status'] === 'open' && is_numeric($item['wait_time']) ? e((string) $item['wait_time']) . ' min en ce moment' : 'Statut a surveiller'; ?>
+                                        </small>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
                         </div>
-                        <span class="status-pill <?php echo $live_is_available ? 'live' : 'offline'; ?>">
-                            <?php echo e($sync_short_label); ?>
-                        </span>
                     </div>
 
-                    <div class="mini-stats">
-                        <article>
-                            <span><?php echo $open_count ?: '--'; ?></span>
-                            <small>ouvertes</small>
-                        </article>
-                        <article>
-                            <span><?php echo $avg_wait !== null ? e($avg_wait) : '--'; ?></span>
-                            <small>moyenne live</small>
-                        </article>
-                        <article>
-                            <span><?php echo e($best_park_name ?? '--'); ?></span>
-                            <small>parc du moment</small>
-                        </article>
+                    <div class="hero-dock-panel" data-home-panel="food" hidden>
+                        <div class="hero-dock-grid hero-dock-grid-rich">
+                            <?php foreach ($foodSpotlights as $spot) : ?>
+                                <a class="hero-dock-card hero-dock-card-rich" href="food.php">
+                                    <img src="<?php echo e(featureEditorialImage('food')); ?>" alt="Restauration Disneyland Paris">
+                                    <div>
+                                        <span class="meta-label"><?php echo e($spot['land']); ?></span>
+                                        <strong><?php echo e($spot['name']); ?></strong>
+                                        <small><?php echo e($spot['service']); ?> - <?php echo e($spot['booking']); ?></small>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
-                    <div class="panel-highlight">
-                        <span class="meta-label">Pick du moment</span>
-                        <h2><?php echo $best_pick ? e($best_pick['name']) : 'Selection live momentanement indisponible'; ?></h2>
-                        <p>
-                            <?php if ($best_pick) : ?>
-                                <?php echo e($best_pick['wait_time']); ?> min dans <?php echo e($best_pick['park']); ?>.
-                            <?php else : ?>
-                                Le site garde ses fiches et ses conseils meme sans live.
-                            <?php endif; ?>
-                        </p>
+                    <div class="hero-dock-panel" data-home-panel="shows" hidden>
+                        <div class="hero-dock-grid hero-dock-grid-rich">
+                            <?php foreach ($showSpotlights as $show) : ?>
+                                <a class="hero-dock-card hero-dock-card-rich" href="shows.php">
+                                    <img src="<?php echo e(parkEditorialImage($show['park'])); ?>" alt="<?php echo e($show['park']); ?>">
+                                    <div>
+                                        <span class="meta-label"><?php echo e($show['park']); ?></span>
+                                        <strong><?php echo e($show['time_label']); ?> - <?php echo e($show['name']); ?></strong>
+                                        <small><?php echo e($show['kind']); ?> - <?php echo e($show['location']); ?></small>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="hero-dock-panel" data-home-panel="news" hidden>
+                        <div class="hero-dock-grid hero-dock-grid-rich">
+                            <?php foreach ($newsSpotlights as $article) : ?>
+                                <a class="hero-dock-card hero-dock-card-rich" href="article.php?slug=<?php echo urlencode($article['slug']); ?>">
+                                    <img src="<?php echo e(articleEditorialImage($article)); ?>" alt="<?php echo e($article['title']); ?>">
+                                    <div>
+                                        <span class="meta-label"><?php echo e($article['park']); ?></span>
+                                        <strong><?php echo e($article['title']); ?></strong>
+                                        <small><?php echo e($article['date']); ?> - <?php echo e($article['reading_time']); ?></small>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
     </section>
 
-    <section class="shell metric-shell">
+    <section class="shell section-shell tight-top">
         <div class="metric-grid">
             <article class="metric-card">
                 <span>2</span>
-                <p>parcs lus dans une meme lecture resort</p>
+                <p>parcs lus dans une meme logique de visite</p>
             </article>
             <article class="metric-card">
-                <span><?php echo e($total_attractions); ?></span>
+                <span><?php echo e((string) $total_attractions); ?></span>
                 <p>attractions suivies dans cette base</p>
             </article>
             <article class="metric-card">
-                <span><?php echo $peak_pick ? e($peak_pick['wait_time']) . ' min' : '--'; ?></span>
+                <span><?php echo $peak_pick ? e((string) $peak_pick['wait_time']) . ' min' : '--'; ?></span>
                 <p>plus forte attente visible</p>
             </article>
             <article class="metric-card">
@@ -105,165 +271,106 @@ renderHeader('home', $site, $nav_items);
 
         <div class="page-anchor-wrap">
             <span class="meta-label">Sommaire de la page</span>
-            <nav class="chip-nav secondary page-anchor-nav" aria-label="Sommaire accueil">
+            <nav class="chip-nav page-anchor-nav" aria-label="Sommaire accueil">
+                <a href="#home-features" class="chip-link">Ce que le site fait mieux</a>
                 <a href="#home-parks" class="chip-link">Lire les deux parcs</a>
-                <a href="#home-daw" class="chip-link">Focus Disney Adventure World</a>
-                <a href="#home-why" class="chip-link">Ce que le site fait mieux</a>
-                <a href="#home-live" class="chip-link">Bonnes opportunites</a>
                 <a href="#home-news" class="chip-link">Actus</a>
             </nav>
         </div>
     </section>
 
-    <section class="shell section-shell" id="home-parks">
+    <section class="shell section-shell" id="home-features">
         <div class="section-head">
-            <p class="eyebrow">Choisir son parc</p>
+            <p class="eyebrow">Lecture resort</p>
             <h2>Deux parcs, deux rythmes, deux promesses de visite.</h2>
             <p>
-                Le site doit aider a passer de l un a l autre sans confusion.
-                Disneyland Park garde sa logique de lands et de grandes icones. Disney Adventure World demande une lecture plus souple, plus recente et plus evolutive.
+                Le site doit aider a passer de l un a l autre sans confusion:
+                priorites, pauses, spectacles, restauration et nouvelles zones ont besoin d une lecture differente.
             </p>
         </div>
 
-        <div class="park-grid">
-            <?php foreach ($park_profiles as $parkName => $profile) : ?>
-                <?php $summary = $park_summaries[$parkName]; ?>
-                <article class="park-card">
-                    <div class="card-row">
-                        <span class="land-mark"><?php echo e(initials($parkName)); ?></span>
-                        <span class="pill soft-blue"><?php echo e($summary['count']); ?> attractions</span>
-                    </div>
-                    <h3><?php echo e($parkName); ?></h3>
-                    <p><?php echo e($profile['headline']); ?></p>
-                    <ul class="mini-list">
-                        <li><?php echo e($profile['focus']); ?></li>
-                        <li><?php echo $summary['avg_wait'] !== null ? e($summary['avg_wait']) . ' min de moyenne live' : 'Moyenne non disponible'; ?></li>
-                    </ul>
-                    <div class="card-actions">
-                        <a href="wait-times.php?park=<?php echo urlencode($parkName); ?>">Temps d attente</a>
-                        <a href="food.php?park=<?php echo urlencode($parkName); ?>">Restauration</a>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </div>
-    </section>
-
-    <section class="shell section-shell" id="home-daw">
-        <div class="section-head inline-head">
-            <div>
-                <p class="eyebrow">Disney Adventure World</p>
-                <h2>Le deuxieme parc a maintenant sa propre lecture editoriale et pratique.</h2>
-            </div>
-            <a class="text-link" href="wait-times.php?park=<?php echo urlencode('Disney Adventure World'); ?>">Ouvrir le parc</a>
-        </div>
-
-        <div class="story-grid">
-            <article class="story-card">
-                <span class="pill soft-blue">Temps d attente</span>
-                <h3><?php echo e($park_summaries['Disney Adventure World']['count']); ?> attractions deja suivies</h3>
-                <p>Flight Force, Spider-Man, Crush, Ratatouille, Frozen Ever After et les nouvelles zones sont deja lues comme une offre complete, avec leurs propres priorites de visite.</p>
-                <a href="wait-times.php?park=<?php echo urlencode('Disney Adventure World'); ?>">Voir les waits</a>
-            </article>
-            <article class="story-card">
-                <span class="pill soft-gold">Restauration</span>
-                <h3><?php echo e(count($adventure_world_food)); ?> adresses deja integrees dans le deuxieme parc</h3>
-                <p>Regal View, Nordic Crowns Tavern, PYM Kitchen et les autres spots utiles sont maintenant integres dans la lecture resto du site.</p>
-                <a href="food.php?park=<?php echo urlencode('Disney Adventure World'); ?>">Voir les restos</a>
-            </article>
-            <article class="story-card">
-                <span class="pill soft-green">Focus fan</span>
-                <h3><?php echo !empty($adventure_world_picks) ? e($adventure_world_picks[0]['name']) : 'World of Frozen et Pixar en focus'; ?></h3>
-                <p>Le parc ne sert plus d annexe. Il devient un terrain editorial, pratique et communautaire a part entiere.</p>
-                <a href="secrets.php?park=<?php echo urlencode('Disney Adventure World'); ?>">Voir les secrets</a>
-            </article>
-        </div>
-    </section>
-
-    <section class="shell section-shell" id="home-why">
-        <div class="section-head">
-            <p class="eyebrow">Ce que le site fait mieux</p>
-            <h2>Une vraie lecture resort, pas une simple copie de chiffres.</h2>
-        </div>
-
         <div class="feature-grid">
-            <?php foreach ($home_features as $feature) : ?>
+            <?php foreach (array_slice($home_features, 0, 4) as $feature) : ?>
                 <article class="feature-card">
                     <span class="pill soft-gold"><?php echo e($feature['tag']); ?></span>
                     <h3><?php echo e($feature['title']); ?></h3>
                     <p><?php echo e($feature['copy']); ?></p>
-                    <a href="<?php echo e($feature['href']); ?>">Voir plus</a>
+                    <a href="<?php echo e($feature['href']); ?>"><?php echo e($feature['cta']); ?></a>
                 </article>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <section class="shell section-shell" id="home-live">
-        <div class="section-head inline-head">
-            <div>
-                <p class="eyebrow">Bonnes opportunites</p>
-                <h2>Les cartes a regarder en premier quand le live bouge.</h2>
-            </div>
-            <a class="text-link" href="wait-times.php">Voir tout le tableau</a>
+    <section class="shell section-shell" id="home-parks">
+        <div class="section-head">
+            <p class="eyebrow">Les deux parcs</p>
+            <h2>Une lecture claire pour choisir le bon rythme de visite.</h2>
+            <p>Chaque parc a ses priorites, ses respirations et ses bons reflexes. La page d accueil doit deja poser cette difference.</p>
         </div>
 
-        <div class="opportunity-grid">
-            <?php if (!empty($top_picks)) : ?>
-                <?php foreach (array_slice($top_picks, 0, 4) as $item) : ?>
-                    <article class="opportunity-card">
-                        <div class="card-row">
-                            <span class="pill soft-green"><?php echo e($item['wait_time']); ?> min</span>
-                            <span class="pill soft-blue"><?php echo e($item['park']); ?></span>
-                        </div>
-                        <h3><?php echo e($item['name']); ?></h3>
-                        <p><?php echo e($item['summary']); ?></p>
-                        <small><?php echo e($item['tip']); ?></small>
-                    </article>
-                <?php endforeach; ?>
-            <?php else : ?>
-                <article class="empty-card">
-                    <h3>Le live ne remonte pas pour le moment</h3>
-                    <p>Le site reste utile pour les contenus, les repères de lands et la preparation de visite.</p>
+        <div class="park-grid">
+            <?php foreach ($parkCards as $park) : ?>
+                <article class="park-card">
+                    <div class="card-row">
+                        <span class="pill soft-blue"><?php echo e($park['name']); ?></span>
+                        <span class="pill soft-green"><?php echo e((string) $park['open_count']); ?> ouvertes</span>
+                    </div>
+                    <h3><?php echo e($park['headline']); ?></h3>
+                    <p><?php echo e($park['focus']); ?></p>
+                    <small class="quiet-note">
+                        <?php echo $park['avg_wait'] !== null ? e((string) $park['avg_wait']) . ' min de moyenne live' : 'Moyenne live non disponible'; ?>
+                    </small>
                 </article>
-            <?php endif; ?>
+            <?php endforeach; ?>
         </div>
     </section>
 
     <section class="shell section-shell" id="home-news">
         <div class="section-head inline-head">
             <div>
-                <p class="eyebrow">Actus</p>
-                <h2>Une vraie couche editoriale pour suivre une destination qui evolue vite.</h2>
+                <p class="eyebrow">Actus et lecture fan</p>
+                <h2>Les sujets qui donnent envie de rester sur le site.</h2>
             </div>
-            <a class="text-link" href="news.php">Toutes les actus</a>
+            <a class="btn btn-secondary" href="news.php">Voir toutes les actus</a>
         </div>
 
-        <div class="story-grid news-home-grid">
-            <article class="featured-story featured-story-compact">
-                <div class="card-row">
-                    <span class="pill soft-blue"><?php echo e($featuredArticle['category']); ?></span>
-                    <span class="pill soft-gold"><?php echo e($featuredArticle['park']); ?></span>
-                </div>
-                <h3><?php echo e($featuredArticle['title']); ?></h3>
-                <p><?php echo e($featuredArticle['excerpt']); ?></p>
-                <div class="story-meta">
-                    <span><?php echo e($featuredArticle['date']); ?></span>
-                    <span><?php echo e($featuredArticle['reading_time']); ?></span>
-                </div>
-                <a href="article.php?slug=<?php echo urlencode($featuredArticle['slug']); ?>">Lire l article</a>
-            </article>
-
-            <?php foreach ($secondaryArticles as $article) : ?>
-                <article class="story-card">
+        <?php if ($featuredArticle) : ?>
+            <div class="story-grid">
+                <article class="story-card story-card--feature">
+                    <img class="card-cover" src="<?php echo e(articleEditorialImage($featuredArticle)); ?>" alt="<?php echo e($featuredArticle['title']); ?>">
                     <div class="card-row">
-                        <span class="pill soft-gold"><?php echo e($article['cover_label']); ?></span>
-                        <span class="pill soft-blue"><?php echo e($article['park']); ?></span>
+                        <span class="pill soft-gold"><?php echo e($featuredArticle['category']); ?></span>
+                        <span class="pill soft-blue"><?php echo e($featuredArticle['park']); ?></span>
                     </div>
-                    <h3><?php echo e($article['title']); ?></h3>
-                    <p><?php echo e($article['excerpt']); ?></p>
-                    <a href="article.php?slug=<?php echo urlencode($article['slug']); ?>">Ouvrir</a>
+                    <h3><?php echo e($featuredArticle['title']); ?></h3>
+                    <p><?php echo e($featuredArticle['excerpt']); ?></p>
+                    <div class="card-row">
+                        <small class="quiet-note"><?php echo e($featuredArticle['date']); ?></small>
+                        <small class="quiet-note"><?php echo e($featuredArticle['reading_time']); ?></small>
+                    </div>
+                    <a href="article.php?slug=<?php echo urlencode($featuredArticle['slug']); ?>">Lire l article</a>
                 </article>
-            <?php endforeach; ?>
-        </div>
+
+                <div class="stack-grid">
+                    <?php foreach (array_slice($newsSpotlights, 1, 3) as $article) : ?>
+                        <article class="mini-surface">
+                            <div class="card-row">
+                                <span class="pill soft-gold"><?php echo e($article['category']); ?></span>
+                                <span class="pill soft-blue"><?php echo e($article['park']); ?></span>
+                            </div>
+                            <h3><?php echo e($article['title']); ?></h3>
+                            <p><?php echo e($article['excerpt']); ?></p>
+                            <div class="card-row">
+                                <small class="quiet-note"><?php echo e($article['date']); ?></small>
+                                <small class="quiet-note"><?php echo e($article['reading_time']); ?></small>
+                            </div>
+                            <a href="article.php?slug=<?php echo urlencode($article['slug']); ?>">Ouvrir</a>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </section>
+
 </main>
-<?php renderFooter($site, $footer_links); ?>
+<?php renderFooter($site, $footer_links, ['assets/js/pages/home.js']); ?>

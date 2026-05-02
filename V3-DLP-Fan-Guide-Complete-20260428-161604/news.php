@@ -91,7 +91,10 @@ renderHeader('news', $site, $nav_items);
             <?php endforeach; ?>
         </div>
 
-        <article class="hero-article news-featured-story" id="news-featured">
+        <article class="hero-article news-featured-story has-cover" id="news-featured">
+            <div class="card-cover card-cover-wide">
+                <img src="<?php echo e(articleEditorialImage($featuredArticle)); ?>" alt="Visuel editorial pour l article <?php echo e($featuredArticle['title']); ?>">
+            </div>
             <div class="card-row">
                 <span class="pill soft-blue"><?php echo e($featuredArticle['category']); ?></span>
                 <span class="pill soft-gold"><?php echo e($featuredArticle['park']); ?></span>
@@ -109,7 +112,10 @@ renderHeader('news', $site, $nav_items);
     <section class="shell section-shell tight-top" id="news-list">
         <div class="story-grid">
             <?php foreach ($remainingArticles as $article) : ?>
-                <article class="story-card news-story-card">
+                <article class="story-card news-story-card has-cover">
+                    <div class="card-cover card-cover-compact">
+                        <img src="<?php echo e(articleEditorialImage($article)); ?>" alt="Visuel editorial pour l article <?php echo e($article['title']); ?>">
+                    </div>
                     <div class="card-row">
                         <span class="pill soft-gold"><?php echo e($article['cover_label']); ?></span>
                         <span class="pill soft-blue"><?php echo e($article['park']); ?></span>
