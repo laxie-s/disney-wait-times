@@ -157,7 +157,7 @@
         const caption = $("[data-trend-caption]", root);
         const width = 720;
         const height = 260;
-        const padding = { top: 18, right: 24, bottom: 24, left: 28 };
+        const padding = { top: 18, right: 24, bottom: 24, left: 32 }; // Légère augmentation padding gauche
 
         function render(id) {
             const item = dataset.find((entry) => entry.id === id) || dataset[0];
@@ -178,14 +178,34 @@
                 `${points[points.length - 1].x},${height - padding.bottom}`,
             ].join(" ");
 
-            const gridLines = [0.25, 0.5, 0.75].map((ratio) => {
-                const y = padding.top + innerHeight * ratio;
-                return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" />`;
+            // NOUVEAU : Labels réels pour la grille (plus lisibles)
+            const gridValues = [0.25, 0.5, 0.75].map(ratio => Math.round(maxWait * ratio));
+
+            const gridLines = gridValues.map((value) => {
+                const y = padding.top + innerHeight * (1 - value/maxWait);
+                return `
+                    <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" />
+                    <text x="${padding.left - 8}" y="${y + 4}" text-anchor="end" class="trend-grid-label">${value}min</text>
+                `;
             }).join("");
 
-            const pointNodes = points.map((point) => `<g><circle cx="${point.x}" cy="${point.y}" r="4.5"></circle><text x="${point.x}" y="${point.y - 12}" text-anchor="middle">${point.wait}</text></g>`).join("");
+            // NOUVEAU : Points améliorés (style gemme)
+            const pointNodes = points.map((point) => `
+                <g>
+                    <circle cx="${point.x}" cy="${point.y}" r="6" class="trend-point-ring"></circle>
+                    <circle cx="${point.x}" cy="${point.y}" r="3.5" class="trend-point-core"></circle>
+                    <text x="${point.x}" y="${point.y - 14}" text-anchor="middle" class="trend-point-label">${point.wait}</text>
+                </g>
+            `).join("");
 
+            // NOUVEAU : Définition du dégradé pour l'aire
             svg.innerHTML = `
+                <defs>
+                    <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.14" />
+                        <stop offset="100%" stop-color="var(--bg-page-bottom)" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
                 <g class="trend-grid">${gridLines}</g>
                 <polygon class="trend-area" points="${area}"></polygon>
                 <polyline class="trend-line" points="${line}"></polyline>
@@ -194,9 +214,14 @@
 
             axis.innerHTML = item.points.map((point) => `<span>${point.label}</span>`).join("");
 
-            const directionLabels = { monte: "Ca risque de monter", redescend: "Ca devrait se detendre", stable: "Ca semble plutot stable" };
+            // NOUVEAU : Icônes dans la summary box
+            const directionLabels = {
+                monte: `<svg width="14" height="14" viewBox="0 0 16 16"><path d="M12.293 8.293 9 5.707V13H7V5.707l-3.293 3.586-1.414-1.414 5-5a1 1 0 0 1 1.414 0l5 5-1.414 1.414Z"/></svg> Ca risque de monter`,
+                redescend: `<svg width="14" height="14" viewBox="0 0 16 16"><path d="M3.707 7.707 7 10.293V3h2v7.293l3.293-3.586 1.414 1.414-5 5a1 1 0 0 1-1.414 0l-5-5 1.414-1.414Z"/></svg> Ca devrait se detendre`,
+                stable: `<svg width="14" height="14" viewBox="0 0 16 16"><path d="M13 13H3V3h10v10Z"/></svg> Ca semble plutot stable`
+            };
             const basisLabel = item.basis === "history" ? `Base observee sur ${item.days || 0} jour(s)` : "Base estimative";
-            status.textContent = directionLabels[item.direction] || directionLabels.stable;
+            status.innerHTML = directionLabels[item.direction] || directionLabels.stable;
             caption.textContent = `${item.name} tourne autour de ${item.typical_wait} min d habitude. ${basisLabel}. Seuil vise: ${item.target_wait} min.`;
             select.value = item.id;
         }
